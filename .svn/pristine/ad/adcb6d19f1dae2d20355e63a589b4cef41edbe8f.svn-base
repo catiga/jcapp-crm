@@ -1,0 +1,46 @@
+package com.jeancoder.crm.ready.dao
+
+import com.jeancoder.jdbc.JcPage
+import com.jeancoder.jdbc.JcTemplate
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.util.JackSonBeanMapper
+import com.jeancoder.crm.ready.util.StringUtil
+
+class AccountProjectMcDao {
+	static final AccountProjectMcDao INSTANSE = new AccountProjectMcDao();
+	static final JcTemplate jcTemplate = JcTemplate.INSTANCE();
+	
+	
+	/**
+	 * 通过手机号和身份证号码模糊查询会员卡
+	 * @return
+	 */
+	public JcPage<AccountProjectMC> getPageByLike(JcPage<AccountProjectMC> page, BigInteger pid, String like) {
+		StringBuffer  sql = new StringBuffer();
+		StringBuffer likeSql =  new StringBuffer();
+		if (!StringUtil.isEmpty(like)) {
+			likeSql.append(" and ((mc_mobile like '%" + like+ "%') || (id_card like '%" + like+ "%'))");
+		}
+		sql.append("select * from AccountProjectMC where pid="+pid+" and flag!=-1  " + likeSql.toString());
+		sql.append("order by c_time desc");
+		def data = jcTemplate.find(AccountProjectMC.class, page, sql.toString());
+		return jcTemplate.find(AccountProjectMC.class, page, sql.toString());
+	}
+	
+	
+	public List<AccountProjectMC> queryByMobileOrCard(BigInteger pid, String query_key) {
+		StringBuffer sql = new StringBuffer();
+		StringBuffer likeSql =  new StringBuffer();
+		sql.append("select * from AccountProjectMC where pid=? and flag!=?  ");
+		sql.append(" and ((mc_mobile=?) || (mc_num=?)) ");
+		sql.append(" group by id order by c_time desc");
+		return jcTemplate.find(AccountProjectMC.class, sql.toString(), pid,-1,query_key,query_key);
+	}
+	
+	public List<AccountProjectMC> queryByMobile(BigInteger pid, String query_key) {
+		StringBuffer sql = new StringBuffer();
+		sql.append("select * from AccountProjectMC where pid=? and flag!=? and mc_mobile=? ");
+		sql.append(" group by id order by c_time desc");
+		return jcTemplate.find(AccountProjectMC.class, sql.toString(), pid,-1,query_key);
+	}
+}

@@ -1,0 +1,279 @@
+package com.jeancoder.crm.internal.api.order
+
+import java.sql.Timestamp
+
+import com.alibaba.druid.stat.JdbcStatManager
+import com.jeancoder.app.sdk.JC
+import com.jeancoder.app.sdk.source.CommunicationSource
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.crm.ready.common.AccountProjectMCStatus
+import com.jeancoder.crm.ready.constant.JsConstants
+import com.jeancoder.crm.ready.constant.McConstants
+import com.jeancoder.crm.ready.constant.McDetailConstant
+import com.jeancoder.crm.ready.constant.SimpleAjax
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.entity.AccountProjectMcDetail
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.MemberCardRule
+import com.jeancoder.crm.ready.mcbridge.MCFactory
+import com.jeancoder.crm.ready.mcbridge.dto.ItemDto
+import com.jeancoder.crm.ready.mcbridge.ret.McPayMovieRet
+import com.jeancoder.crm.ready.order.TradeResult
+import com.jeancoder.crm.ready.service.AccountProjectMcDetailService
+import com.jeancoder.crm.ready.service.AccountProjectMcService
+import com.jeancoder.crm.ready.service.MemberCardHierarchyService
+import com.jeancoder.crm.ready.service.MemberCardRuleService
+import com.jeancoder.crm.ready.util.AccountProjectMCUtil
+import com.jeancoder.crm.ready.util.CPISCoderTools
+import com.jeancoder.crm.ready.util.DataUtils
+import com.jeancoder.crm.ready.util.JackSonBeanMapper
+import com.jeancoder.crm.ready.util.MD5Util
+import com.jeancoder.crm.ready.util.MoneyUtil
+import com.jeancoder.crm.ready.util.StringUtil
+
+/**
+ * 扣款接口
+ */
+JCLogger Logger = LoggerSource.getLogger("mc_deduction:");
+TradeResult tr = new TradeResult();
+tr.code = "1000";
+def num =   new Date().getTime();
+num = num.toString() + new Random().nextInt(1000).toString();
+try {
+	String pid  =  CommunicationSource.getParameter("pid").toString();
+	String remarks  =  CommunicationSource.getParameter("remarks").toString();
+	String card_code_str = StringUtil.trim(CommunicationSource.getParameter("card_code"));// 加密字符串
+	String os = CommunicationSource.getParameter("os");//
+	String pwd =  CommunicationSource.getParameter("pwd");// 加密字符串
+	os = URLDecoder.decode(os)
+	def list = JackSonBeanMapper.jsonToList(os);
+	Logger.info('{num= '+num+ ', parameter:{pid = '+ pid + ',remarks= ' + remarks + ' ,os= '+ os  + ' }}');
+	if (StringUtil.isEmpty(card_code_str)) {
+		tr.code = JsConstants.input_param_null;
+		tr.err_code_des = "会员卡号为空";
+		return  tr;
+	}
+//	if (AccountProjectMCUtil.isCard(card_code_str) && StringUtil.isEmpty(pwd)) {
+//		tr.code = JsConstants.input_password;
+//		tr.err_code_des ="密码不能为空";
+//		return tr;
+//	}
+	boolean isCard = AccountProjectMCUtil.isCard(card_code_str);
+	
+	// 如果不是实体卡号， 则需要判断有效期；
+	if (!isCard) {
+		String[] info = AccountProjectMCUtil.getCardInfo(card_code_str);
+		Long dateValidity = new Long(info[1]);
+		if (new Date().getTime() > dateValidity) {
+			tr.code = JsConstants.mc_not_found;
+			tr.err_code_des = "二维码已失效";
+			return tr;
+		}
+	}
+	
+	String card_code = AccountProjectMCUtil.getMcNum(card_code_str);
+	AccountProjectMC mc = AccountProjectMcService.INSTANSE.get_normal_mc_by_num(new BigInteger(pid), card_code);//mc_num查询mc
+	if (mc == null) {
+		tr.code = JsConstants.mc_not_found;
+		tr.err_code_des = "会员卡不存在";
+		return tr;
+	}
+	
+	// 实体卡 校验密码
+	if (isCard) {
+		if (StringUtil.isEmpty(pwd)) {
+			tr.code = JsConstants.input_password;
+			tr.err_code_des ="密码不能为空";
+			return tr;
+		}
+		if (!MD5Util.getMD5(pwd).equals(mc.mc_pwd)) {
+			Logger.info("num= " +num + "___"+pwd + "__" + MD5Util.getMD5(pwd) + "___" + card_code);
+			tr.code = JsConstants.password_error;
+			tr.err_code_des = "密码错误";
+			return tr;
+		}
+	}
+	
+	MemberCardHierarchy mch = MemberCardHierarchyService.INSTANSE.getItem(mc.mch_id);//mch id 查询mch
+	MemberCardRule mcr = MemberCardRuleService.INSTANSE.getItem(mch.mc_id);//mcr id查询 mcr
+
+	//判断会员卡状态
+	if("10".equals(mcr.mcr_status)){
+		tr.code = JsConstants.mc_rule_stop;
+		tr.err_code_des = "当前会员卡停止使用";
+		return tr;
+	}
+	
+	//会员卡状态判断
+	if(!AccountProjectMCStatus.NORMAL.equals(mc.status)){
+		tr.code = JsConstants.mc_not_pay;
+		tr.err_code_des ="会员卡状态错误";
+		return tr;
+	}
+	//是否允许余额支付
+	if(0.equals(mch.bapa)){
+		tr.code = JsConstants.not_balance_pay;
+		tr.err_code_des = "会员卡不能余额支付";
+		return tr;
+	}
+//	[order_no:toi.order_num,amount:toi.pay_amount.toString(),oc:toi.oc]
+	String amount = "0";
+	Map<String,String> orderMap = new HashMap<String,String>();
+	List<AccountProjectMcDetail> order_list = new ArrayList<AccountProjectMcDetail>();
+	String detail_num = CPISCoderTools.serialNum(McDetailConstant.deduction);
+	for (def item : list) {
+		String item_order_no = item.order_no;
+		String item_amount = item.amount;
+		String item_oc = item.oc;
+		
+		AccountProjectMcDetail order = new AccountProjectMcDetail();
+		if (StringUtil.isEmpty(item_order_no)|| StringUtil.isEmpty(item_amount) ||StringUtil.isEmpty(item_oc)) {
+			tr.code = JsConstants.input_param_error;
+			tr.err_code_des ="参数为空";
+			return tr;
+		}
+		if(!DataUtils.isNumber(item_amount)){
+			tr.code = JsConstants.limit_number;
+			tr.err_code_des = "金额只能为数字";
+			return tr;
+		}
+		/******************************先去明细中查询当前交易是否已经记录************************************************/
+		List<AccountProjectMcDetail>  detail = AccountProjectMcDetailService.INSTANSE.get_order_on_oc(new BigInteger(pid), item_oc, item_order_no);
+		if (detail != null && !detail.isEmpty()) {
+			tr.code = JsConstants.unknown;
+			tr.err_code_des = "订单编号已存在";
+			return tr;
+		}
+		
+		if (item_oc.equals(orderMap.get(item_order_no))) {
+			tr.code = JsConstants.unknown;
+			tr.err_code_des = "订单编号重复";
+			return tr;
+		}
+		orderMap.put(item_order_no,item_oc);
+		order.pid =  new BigInteger(pid);
+		order.acmid = mc.id;
+		order.order_no = item_order_no;
+		order.amount = "-" + item_amount;
+		order.o_c = item_oc;
+		order.remarks = "";
+		order.a_time = new Date();
+		order.c_time = new Timestamp(new Date().getTime());
+		order.flag = 0;
+		if(McConstants._mch_goods_htimes_.equals(item_oc)){
+			order.code=McDetailConstant.deduction_goods;
+		} else if(McConstants._mch_movie_htimes_.equals(item_oc)){
+			order.code=McDetailConstant.deduction_movie;
+		} else if(McConstants._mch_reserve_movie_htimes_.equals(item_oc)){
+			order.code=McDetailConstant.deduction_movie;
+		} else {
+			order.code=McDetailConstant.deduction;
+		}
+		
+		order.num = detail_num;
+		order_list.add(order);
+		// 计算积分
+		String point = AccountProjectMcDetailService.INSTANSE.getPoint(item_oc,item_amount,mch);
+		mc.point = MoneyUtil.add(mc.point, point);
+		amount = MoneyUtil.add(amount, item_amount);
+	}
+	
+//	String amount_sum = AccountProjectMcDetailService.INSTANSE.getAmountSum(mc.id);//账户余额
+//	String balance = MoneyUtil.add(amount_sum, "-" + amount);//扣款
+//	if( Double.parseDouble(balance)< 0){
+//		tr.code = JsConstants.recharge_amount_not_meet;
+//		tr.err_code_des = "余额不足";
+//		return tr;
+//	}
+	String rules = "";
+	if ('0'.equals(mcr.outer_type)) {
+		rules = AccountProjectMcDetailService.INSTANSE.deduction(order_list, mc,amount);
+ 	} else {
+		 rules = ''
+		 for (AccountProjectMcDetail item : order_list) {
+			 if ('2000'.equals(item.o_c) || '2010'.equals(item.o_c)) {
+				 rules =  outerDeduction(mc,mcr, pid, detail_num, item.order_no, item.o_c, Logger);
+				 if (!StringUtil.isEmpty(rules)) {
+					 tr.code = "111";
+					 tr.err_code_des = rules;
+					 return tr;
+				 }
+			 } else {
+				 tr.code = "111";
+				 tr.err_code_des = "外部会员卡只支持购票";
+				 return tr;
+			 }
+		 }
+	}
+	if (StringUtil.isEmpty(rules)) {
+		tr.trans_user_id = mc.mc_num;
+		tr.trans_pay_amount = amount;
+		tr.trans_total_amount = amount;
+		tr.trans_id = detail_num;
+		tr.code = "0";
+	} else {
+		tr.code = "111";
+		tr.err_code_des = rules;
+	}
+
+	return tr;
+} catch (Exception e) {
+	tr.code = JsConstants.unknown;
+	tr.err_code_des = "支付失败";
+	Logger.error("支付失败", e);
+	return tr;
+} finally {
+	Logger.info('{num= '+num+ ' , rules:'+ JackSonBeanMapper.toJson(tr)+'}');
+}
+
+
+public String outerDeduction(AccountProjectMC mc,def mcr, def pid, def detail_num, def  no, def  oc, JCLogger Logger) {
+	SimpleAjax ajax  = JC.internal.call(SimpleAjax,'ticketingsys', "/ticketing/outer_mc_ticketing_detail", [no:no,oc:oc]);
+	if (!ajax.available)  {
+		return  ajax.messages[0];
+	}
+	def pdto = ajax.data ;
+	List<ItemDto> movies = new ArrayList<ItemDto>();
+	for (def dto : pdto.g) {
+		ItemDto item = new ItemDto();
+		item.id = dto[0].toString();
+		item.price = dto[1].toString();
+		item.level_price = dto[2].toString();
+		if(dto[4]) {
+			item.handle_fee = dto[4].toString();	//增加手续费字段
+		}
+		movies.add(item);
+	}
+	def param = [:]
+	param['c_id'] = pdto.c_id;
+	param['play_no'] = pdto.play_no;
+	param['lock_flag'] = pdto.lock_flag;
+	param['order_no'] = no;
+	param['update_time'] = pdto.update_time;
+	param['play_no'] = pdto.play_no;//排期编号
+	def bring =  MCFactory.generate(mcr);
+	Logger.info("outer_mc_movie_deduction param:"+JackSonBeanMapper.toJson(param));
+	McPayMovieRet pub = bring.pay_movie_mc(mc, movies, param);
+	Logger.info("outer_mc_movie_deduction 会员支付购票结果:"+JackSonBeanMapper.toJson(pub));
+	if (!pub.isSuccess()) {
+		return  pub.msg+":"+pub.rmMsg;
+	}
+	String amount = MoneyUtil.get_cent_from_yuan(pub.ticket_flag.pay_price);
+	AccountProjectMcDetail order = new AccountProjectMcDetail();
+	order.pid =  new BigInteger(pid.toString());
+	order.acmid = mc.id;
+	order.order_no = no;
+	order.amount = "-" + amount;
+	order.o_c = oc;
+	order.remarks = "";
+	order.a_time = new Date();
+	order.c_time = new Timestamp(new Date().getTime());
+	order.flag = 0;
+	order.code=McDetailConstant.deduction_movie;
+	order.num = detail_num;
+	List<AccountProjectMcDetail> order_list = new ArrayList<AccountProjectMcDetail>()
+	order_list.add(order);
+	String rules = AccountProjectMcDetailService.INSTANSE.outerDeduction(order_list, mc,amount);
+	return rules;
+}

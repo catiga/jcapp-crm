@@ -1,0 +1,439 @@
+package com.jeancoder.crm.ready.service
+
+import java.sql.Timestamp
+
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.crm.ready.common.AccountProjectMCStatus
+import com.jeancoder.crm.ready.constant.McConstants
+import com.jeancoder.crm.ready.constant.McDetailConstant
+import com.jeancoder.crm.ready.dto.AccountBasicDto
+import com.jeancoder.crm.ready.dto.sys.AuthToken
+import com.jeancoder.crm.ready.entity.AccountBasic
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.entity.AccountProjectMcDetail
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.OrderMc
+import com.jeancoder.crm.ready.entity.OrderRechargeMc
+import com.jeancoder.crm.ready.order.OrderConstants
+import com.jeancoder.crm.ready.util.CPISCoderTools
+import com.jeancoder.crm.ready.util.DataUtils
+import com.jeancoder.crm.ready.util.StringUtil
+import com.jeancoder.jdbc.JcPage
+import com.jeancoder.jdbc.JcTemplate
+
+class OrderMcService {
+
+	static final OrderMcService INSTANSE = new OrderMcService();
+	private static final JCLogger Logger = LoggerSource.getLogger(this.getClass().getName());
+	private static final JcTemplate jcTemplate = JcTemplate.INSTANCE();
+
+
+	//	public OrderMc create(BigInteger pid, AccountBasicDto basic, MemberCardHierarchy mch, String init_pwd, Integer ops, GeneralUser user) {
+	//		String mall_num = nextInt(100000, 999999) + "";
+	//		String ot = System.currentTimeMillis() + "";
+	//		String order_no = "gmc" + CPISCoderTools.generateOrderNum(mall_num, ot.substring(0, 1));
+	//
+	//		Date o_date = new Date();
+	//
+	//		String get_pay = mch.getGetpay();
+	//		if(get_pay==null||get_pay.trim().equals("")) {
+	//			get_pay = "0";
+	//		} else if(!DataUtils.isNumber(get_pay)) {
+	//			//错误情况也为0
+	//			get_pay = "0";
+	//		}
+	//		get_pay = get_pay.trim();
+	//
+	//		OrderMc omc = new OrderMc();
+	//		omc.a_time =  o_date;
+	//		omc.basic_id =  basic.id;
+	//		omc.mch_id = mch.id;
+	//		//设置初始密码
+	//		omc.init_pwd = init_pwd;
+	//		//设置获卡赠送金额
+	//		String gift_balance = "0";
+	//		if(DataUtils.isNumber(mch.gift_recharge)) {
+	//			gift_balance = mch.gift_recharge;
+	//		}
+	//		omc.gift_amount = gift_balance;
+	//		omc.o_c = OrderConstants.OrderType._get_mc_;
+	//		omc.order_no = order_no;
+	//		if(mch.getMcRule()!=null) {
+	//			omc.pid = mch.getMcRule.pid;
+	//		} else {
+	//			omc.pid = pid;
+	//		}
+	//		omc.total_amount = get_pay;
+	//		omc.pay_amount = get_pay;
+	//		omc.order_status = OrderConstants._order_status_create_;
+	//		omc.ops = ops;
+	//		if(ops.equals(1)) {
+	//			if(user!=null) {
+	//				omc.setPuid(user.id);
+	//				omc.setPuname(user.getName());
+	//			}
+	//		}
+	//		if(get_pay.equals("0")) {
+	//			//直接设置pay time 和 order_status
+	//			omc.pay_time = o_date;
+	//			omc.order_status = OrderConstants._order_status_payed_;
+	//		}
+	//		omc.id = jcTemplate.save(omc)
+	//		return omc;
+	//	}
+	/**
+	 * 创建会员卡购买订单
+	 * 
+	 */
+	public OrderMc create_order(def pid,AccountBasicDto account,MemberCardHierarchy mch,def opd){
+		String mall_num = nextInt(100000, 999999) + "";
+		String ot = System.currentTimeMillis() + "";
+		String order_no = "gmc" + CPISCoderTools.generateOrderNum(mall_num, ot.substring(0, 1));
+		String get_pay = mch.getGetpay();
+		if(get_pay==null||get_pay.trim().equals("")) {
+			get_pay = "0";
+		} else if(!DataUtils.isNumber(get_pay)) {
+			//错误情况也为0
+			get_pay = "0";
+		}
+		get_pay = get_pay.trim();
+		OrderMc omc = new OrderMc();
+		omc.card_no=order_no;
+		omc.a_time = new Date();
+		omc.mch_id = mch.id;
+		//设置初始密码
+		omc.init_pwd = opd;
+		//设置获卡赠送金额
+		String gift_balance = "0";
+		if(DataUtils.isNumber(mch.gift_recharge)) {
+			gift_balance = mch.gift_recharge;
+		}
+		omc.gift_amount = gift_balance;
+		omc.o_c = OrderConstants.OrderType._get_mc_;
+		omc.order_no = order_no;
+		omc.pid = pid;
+		omc.total_amount = get_pay;
+		omc.pay_amount = get_pay;
+		omc.order_status = OrderConstants._order_status_create_;
+		omc.ops="1";
+		if (omc.ops.equals(1)) {
+			omc.puid = account.id;
+			omc.puname = account.name;
+		}
+		if(get_pay.equals("0")) {
+			//直接设置pay time 和 order_status
+			omc.pay_time = new Date();
+			omc.order_status = OrderConstants._order_status_payed_;
+		}
+		omc.id = jcTemplate.save(omc)
+		return omc;
+
+	}
+	
+	/**
+	 * 后台创建发卡订单
+	 * @param pid
+	 * @param mch
+	 * @param init_pwd
+	 * @param ops 1 后台发卡, 0是自购
+	 * @param basic
+	 * @param user
+	 * @return
+	 */
+
+	public OrderMc admin_create_order(String mc_num, MemberCardHierarchy mch, BigInteger pid,BigInteger sid, String sname,BigInteger pre_id, String mc_name,String mc_mobile,String id_card,String init_pwd, AuthToken tolen) {
+		//pid,sid,sname, mch,mc_name,mc_mobile,id_card,pwd,h_id,RemoteUtil.getAuthToken()
+		
+		String mall_num = nextInt(100000, 999999) + "";
+		String ot = System.currentTimeMillis() + "";
+		String order_no = "gmc" + CPISCoderTools.generateOrderNum(mall_num, ot.substring(0, 1));
+		Date o_date = new Date();
+
+		String get_pay = mch.getGetpay();
+		if(get_pay==null||get_pay.trim().equals("")) {
+			get_pay = "0";
+		} else if(!DataUtils.isNumber(get_pay)) {
+			//错误情况也为0
+			get_pay = "0";
+		}
+		get_pay = get_pay.trim();
+
+		OrderMc omc = new OrderMc();
+		omc.card_no = mc_num;
+		omc.a_time =  o_date;
+		omc.mch_id = mch.id;
+		//设置初始密码
+		omc.init_pwd = init_pwd;
+		//设置获卡赠送金额
+		String gift_balance = "0";
+		if(DataUtils.isNumber(mch.gift_recharge)) {
+			gift_balance = mch.gift_recharge;
+		}
+		omc.gift_amount = gift_balance;
+		omc.o_c = OrderConstants.OrderType._get_mc_
+		omc.order_no = order_no;
+		omc.pid = pid;
+		omc.total_amount = get_pay;
+		omc.pay_amount = get_pay;
+		omc.order_status = OrderConstants._order_status_create_;
+		omc.ops = 1;
+		omc.store_id = sid;
+		omc.store_name = sname;
+		omc.puid = tolen.user.id;
+		omc.puname = tolen.user.name;
+		omc.pre_item_id = pre_id;
+		if(get_pay.equals("0")) {
+			//直接设置pay time 和 order_status
+			omc.pay_time = o_date;
+			omc.order_status = OrderConstants._order_status_payed_;
+		}
+		// 设置会员信息
+		omc.mc_name = mc_name;
+		omc.mobile = mc_mobile;
+		omc.id_card = id_card;
+		omc.init_pwd = init_pwd;
+		omc.id = jcTemplate.save(omc)
+		return omc;
+	}
+	
+	public OrderMc get_crm_card_item(String order_no) {
+		String sql = "select * from OrderMc where order_no=? and flag!= -1";
+		return jcTemplate.get(OrderMc.class, sql,order_no);
+	}
+	
+	/**
+	 * h5接口创建会员卡购买订单
+	 * @param pid
+	 * @param mch
+	 * @param init_pwd
+	 * @param ops
+	 * @param tolen
+	 * @return
+	 */
+	public OrderMc create_order(BigInteger apid, BigInteger pid,def sid, def sname, String mobile, MemberCardHierarchy mch, String init_pwd) {
+		String mall_num = nextInt(100000, 999999) + "";
+		String ot = System.currentTimeMillis() + "";
+		String order_no = "gmc" + CPISCoderTools.generateOrderNum(mall_num, ot.substring(0, 1));
+		Date o_date = new Date();
+
+		String get_pay = mch.getGetpay();
+		if(get_pay==null||get_pay.trim().equals("")) {
+			get_pay = "0";
+		} else if(!DataUtils.isNumber(get_pay)) {
+			//错误情况也为0
+			get_pay = "0";
+		}
+		get_pay = get_pay.trim();
+		OrderMc omc = new OrderMc();
+		omc.basic_id = apid;
+		omc.mobile = mobile;
+		omc.a_time =  o_date;
+		omc.mch_id = mch.id;
+		//设置初始密码
+		omc.init_pwd = init_pwd;
+		//设置获卡赠送金额
+		String gift_balance = "0";
+		if(DataUtils.isNumber(mch.gift_recharge)) {
+			gift_balance = mch.gift_recharge;
+		}
+		omc.gift_amount = gift_balance;
+		omc.o_c = OrderConstants.OrderType._get_mc_;
+		omc.order_no = order_no;
+		omc.pid = pid;
+		omc.total_amount = get_pay;
+		omc.pay_amount = get_pay;
+		if (sid != null) {
+			omc.store_id = new BigInteger(sid.toString());
+			omc.store_name = sname;
+		}
+		omc.order_status = OrderConstants._order_status_create_;
+		omc.ops = 0;
+		if(get_pay.equals("0")) {
+			//直接设置pay time 和 order_status
+			omc.pay_time = o_date;
+			omc.order_status = OrderConstants._order_status_payed_;
+		}
+		omc.id = jcTemplate.save(omc)
+		return omc;
+	}
+
+
+	public void recharge(OrderMc order_mc, AccountProjectMC apmc,def basic_id) {
+		Date date = new Date();
+		order_mc.order_status = OrderConstants._order_status_taked_;
+		order_mc.take_time = date;
+		order_mc.acmid = apmc.id;
+		order_mc.card_no =  apmc.mc_num;
+		order_mc.pay_time = date;
+		order_mc.basic_id = basic_id;
+		order_mc.c_time =  new Timestamp(date.getTime());
+		jcTemplate.update(order_mc);
+
+		AccountProjectMcDetail detail = new AccountProjectMcDetail();
+		detail.pid =  order_mc.pid;
+		detail.acmid = apmc.id;
+		detail.order_no = order_mc.order_no;
+		detail.o_c =  OrderConstants.OrderType._get_mc_;
+		detail.a_time = new Date();
+		detail.c_time = new Timestamp(new Date().getTime());
+		detail.flag = 0;
+		detail.remarks = "0";
+		detail.amount = order_mc.pay_amount;
+		detail.code = McDetailConstant.create_order;
+		detail.num = CPISCoderTools.serialNum(detail.code);
+		jcTemplate.save(detail);
+
+		Date receive_time =  new Date();
+		apmc.status = AccountProjectMCStatus.NORMAL;
+		apmc.c_time = new Timestamp(receive_time.getTime());
+		apmc.balance = AccountProjectMcDetailService.INSTANSE.getAmountSum(apmc.id);
+		apmc.receive_time = new Timestamp(receive_time.getTime()); 
+		jcTemplate.update(apmc);
+		// 更新余额
+		//orderMcDao.saveOrUpdate(order_mc);
+		AccountProjectMcService apmcs=new AccountProjectMcService();
+		AccountBasicService abcs=new AccountBasicService();
+		AccountBasic basic=abcs.getItemByMobile(apmc.mc_mobile);
+		if (basic!=null) {
+			String resultStr =apmcs.updateByMobile(apmc.mc_mobile, basic.id,apmc.pid);
+		}
+	}
+	
+	public List<AccountProjectMC> get_crm_order_item(def order_no){
+		String sql = "select * from AccountProjectMC where id in(select acmid from OrderMc where order_no=?)";
+		return jcTemplate.find(AccountProjectMC.class, sql, order_no);
+	}
+	
+	public List<OrderRechargeMc> get_crm_recharge_item(def order_no){
+		String sql = "select * from OrderRechargeMc where order_no = ?";
+		return jcTemplate.find(OrderRechargeMc.class, sql, order_no);
+	}
+
+//	public void recharge(OrderMc order_mc) {
+//		order_mc.order_status = OrderConstants._order_status_payed_;
+//		order_mc.pay_time = new Date();
+//		order_mc.c_time =  new Timestamp(new Date().getTime());
+//		jcTemplate.update(order_mc);
+//	}
+
+
+	public OrderMc getByNum(String order_no, BigInteger pid) {
+		String sql = "select * from OrderMc where order_no=? and pid=? and flag!= -1";
+		return jcTemplate.get(OrderMc.class, sql,order_no,pid);
+	}
+
+	/**
+	 *创建会员卡购买订单 
+	 * 
+	 */
+	public OrderMc admin_create_orderMc(BigInteger pid, MemberCardHierarchy mch, String init_pwd, Integer ops,AccountProjectMC acm, AuthToken tolen) {
+		String mall_num = nextInt(100000, 999999) + "";
+		String ot = System.currentTimeMillis() + "";
+		String order_no = "gmc" + CPISCoderTools.generateOrderNum(mall_num, ot.substring(0, 1));
+		Date o_date = new Date();
+
+		String get_pay = mch.getGetpay();
+		if(get_pay==null||get_pay.trim().equals("")) {
+			get_pay = "0";
+		} else if(!DataUtils.isNumber(get_pay)) {
+			//错误情况也为0
+			get_pay = "0";
+		}
+		get_pay = get_pay.trim();
+		OrderMc omc = new OrderMc();
+		omc.card_no = acm.mc_num;
+		omc.acmid = acm.id;
+		omc.a_time =  o_date;
+		omc.mch_id = mch.id;
+		//设置初始密码
+		omc.init_pwd = init_pwd;
+		//设置获卡赠送金额
+		omc.gift_amount = "0";
+		omc.order_no = order_no;
+		omc.pid = pid;
+		omc.total_amount = "0";
+		omc.pay_amount = get_pay;
+		omc.order_status = OrderConstants._order_status_create_;
+		omc.ops = ops;
+		omc.acmid = acm.id;
+		if (ops.equals(1)) {
+			omc.puid = tolen.user.id;
+			omc.puname = tolen.user.name;;
+		}
+		omc.id = jcTemplate.save(omc)
+		return omc;
+	}
+	/**
+	 * 获取会员购买订单
+	 * 
+	 */
+	def get_trade_order(JcPage<OrderMc> page, def pid,String start_data, String end_data,String order_status) {
+		String sql = "select * from OrderMc Where 1=1 ";
+		if (!StringUtil.isEmpty(start_data) && !StringUtil.isEmpty(end_data)) {
+			sql +=  "and (a_time between '"+start_data+"' and '"+end_data+"') "
+		}
+		if (pid != null) {
+			sql +=  " and pid="+ pid;
+		}
+		if (!StringUtil.isEmpty(order_status)) {
+			sql += " and order_status in ("+order_status+")";
+		}
+		sql += "  and flag!="+ -1+" order by a_time desc";
+		return jcTemplate.find(OrderMc,page, sql,null);
+	}
+	def get_trade_acmid_list(def card_no){
+		String sql = "select * from AccountProjectMC Where mc_num = ? and flag != -1";
+		return jcTemplate.get(AccountProjectMC, sql, card_no);
+	}
+	def get_trade_order_list(JcPage<AccountProjectMcDetail> page,def acm_id,def date_time,def trade_type){
+		String sql = "select * from AccountProjectMcDetail Where 1=1";
+		if (!StringUtil.isEmpty(String.valueOf(acm_id))) {
+			sql +=  " and acmid="+ acm_id;
+		}
+		if (!StringUtil.isEmpty(date_time)) {
+			sql +=  " and (a_time between '"+date_time+" 00:00:00' and '"+date_time+" 23:59:59')"
+		}
+		if (!StringUtil.isEmpty(trade_type)) {
+			if(trade_type.equals("3000")||trade_type.equals("3001")||trade_type.equals("3002")){
+				sql +=  " and code in(3000,3001,3002)";
+			}else{sql +=  " and o_c='"+ trade_type + "'";}
+		}
+		sql += " and flag!="+ -1+" order by a_time desc";
+        return jcTemplate.find(AccountProjectMcDetail, page, sql, null);
+	}
+	public Integer update(OrderMc order){
+		order.c_time = new Timestamp(new Date().getTime());
+		return jcTemplate.update(order);
+	}
+	protected int nextInt(final int min, final int max){
+		Random rand= new Random();
+		int tmp = Math.abs(rand.nextInt());
+		return tmp % (max - min + 1) + min;
+	}
+	
+	public OrderMc getByNo(String order_no, BigInteger pid,def o_c) {
+		String sql = "select * from OrderMc where order_no=? and pid=? and flag!= -1 and o_c=?";
+		return jcTemplate.get(OrderMc.class, sql,order_no,pid,o_c);
+	}
+	
+	public OrderMc update_order_status(OrderMc order){
+		OrderMc item = getByNo(order.order_no, order.pid,order.o_c);
+		if (item == null) {
+			return null;
+		}
+		item.order_status  = McConstants._order_status_closed_;
+		item.c_time = new Timestamp(new Date().getTime());
+		jcTemplate.update(item);
+		return item ;
+	}
+	
+
+	def updateOrderMc(OrderMc orderMc){
+		return jcTemplate.update(orderMc);
+	}
+	
+	def updateOrderRechargeMc(OrderRechargeMc order){
+		return jcTemplate.update(order);
+	}
+}

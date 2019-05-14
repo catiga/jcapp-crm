@@ -1,0 +1,65 @@
+package com.jeancoder.crm.ready.mcbridge
+
+import com.jeancoder.crm.ready.mcbridge.constants.MCBringConstants
+
+class MCRet {
+	
+	private String code = MCBringConstants._mcb_success_;
+
+	private String msg = "success";
+
+	private String rmCode;
+
+	private String rmMsg;
+
+	public MCRet() {
+		super();
+		code = "0";
+		msg = "success";
+	}
+
+	public MCRet(String code, String msg) {
+		super();
+		this.code = code;
+		this.msg = msg;
+	}
+
+	public String getCode() {
+		return code;
+	}
+
+	public void setCode(String code) {
+		this.code = code;
+	}
+
+	public String getMsg() {
+		return msg;
+	}
+
+	public void setMsg(String msg) {
+		this.msg = msg;
+	}
+
+	public String getRmCode() {
+		return rmCode;
+	}
+
+	public void setRmCode(String rmCode) {
+		this.rmCode = rmCode;
+	}
+
+	public String getRmMsg() {
+		return rmMsg;
+	}
+
+	public void setRmMsg(String rmMsg) {
+		this.rmMsg = rmMsg;
+	}
+
+	public boolean isSuccess() {
+		if (code.equals(MCBringConstants._mcb_success_)) {
+			return true;
+		}
+		return false;
+	}
+}

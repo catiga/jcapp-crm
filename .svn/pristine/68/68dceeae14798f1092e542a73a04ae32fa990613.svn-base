@@ -1,0 +1,101 @@
+package com.jeancoder.crm.ready.dto.mc
+
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.MemberCardRule
+import com.jeancoder.crm.ready.util.DataUtils
+
+class McHierchHiDto {
+	
+	BigInteger id;
+	
+	Integer hindex;
+	
+	String h_num;
+	
+	String h_name;
+	
+	String get_pay;
+	
+	Integer get_mode;
+	
+	Integer day_buy_limit;
+	
+	String cr_discount;
+	
+	String cr_type_desc;
+	
+	String cr_type;
+	
+	String init_recharge;
+	
+	String least_recharge;
+	
+	Integer show_buy_limit;
+	
+	boolean supp_recharge;
+	
+	McCardAvailableDto mc_rule;
+	List<String> discount_str;
+	String bgc;
+	String imgUrl;
+
+	public McHierchHiDto() {};
+	public McHierchHiDto(MemberCardHierarchy e) {
+		this.id = e.id;
+		this.hindex = e.hindex;
+		this.h_name = e.h_name;
+		this.get_pay = e.getpay;
+		this.get_mode = e.getmode;
+		this.cr_type_desc = e.cr_type_desc;
+		this.bgc = bgc;
+		this.imgUrl = e.img_url;
+		this.cr_discount = e.cr_discount;
+		this.discount_str = appendDiscount_str(e);
+		
+	}
+	
+	/*
+	 * 拼接优惠信息
+	 */
+	public List<String> appendDiscount_str(MemberCardHierarchy e){
+		
+		List<String> list = new LinkedList<String>();
+	
+		if("".equals(e.cr_discount)){
+			return null;
+		}
+		if(!DataUtils.isNumber(e.cr_discount)){
+			return null;
+		}
+		if(Integer.parseInt(e.cr_discount)>=0){
+			cr_discount = "折扣"+Integer.parseInt(e.cr_discount)/100;
+			list.add(cr_discount);
+		}
+		
+		if("".equals(e.day_buy_limit)){
+			return null;
+		}
+		Integer day_buy = e.day_buy_limit;
+		
+		String day_buy_limmit;
+		
+		if(day_buy>=0){
+			 day_buy_limmit= "每日限购"+e.day_buy_limit.toString();
+			 list.add(day_buy_limmit);
+		}
+		
+		if("".equals(e.show_buy_limit)){
+			return null;
+		}
+		
+		Integer show_buy = e.show_buy_limit;
+		
+		String show_buy_limit;
+		
+		if(show_buy>=0){
+			show_buy_limit= "每次限购"+e.show_buy_limit.toString();
+			list.add(show_buy_limit);
+		}
+		return list;
+	}
+}

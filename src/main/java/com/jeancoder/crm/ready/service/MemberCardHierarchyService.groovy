@@ -1,0 +1,258 @@
+package com.jeancoder.crm.ready.service
+
+import java.sql.Timestamp
+import java.util.List
+
+import com.jeancoder.crm.ready.constant.McConstants
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.MemberCardRule
+import com.jeancoder.crm.ready.util.GlobalHolder
+import com.jeancoder.jdbc.JcPage
+import com.jeancoder.jdbc.JcTemplate
+
+public class MemberCardHierarchyService {
+
+	public static final MemberCardHierarchyService INSTANSE = new MemberCardHierarchyService();
+
+	private static final JcTemplate jcTemplate = JcTemplate.INSTANCE();
+
+	public Integer saveItem(MemberCardHierarchy mch) {
+		MemberCardHierarchy item=new MemberCardHierarchy();
+		item.mc_id=mch.mc_id
+		item.h_num=mch.h_num;
+		item.cr_type_desc=mch.cr_type_desc;
+		item.mcr_period=mch.mcr_period;
+		item.hindex=mch.hindex;
+		item.htimes=mch.htimes;
+		item.h_name=mch.h_name;
+		item.goods_htimes = mch.goods_htimes;
+		item.movie_hitmes = mch.movie_hitmes;
+		item.a_time=new Date();
+		item.c_time=new Timestamp(new Date().getTime());
+		item.supp_recharge = 0;//默认不支持充值
+		item.gift_recharge = "0";// 默认赠送余额
+		item.init_recharge = "0";// 首充金额
+		item.least_recharge = "0";//最低充值金额
+		return jcTemplate.INSTANCE.save(item);
+	}
+
+
+	public Integer updateItem(MemberCardHierarchy mch) {
+
+		MemberCardHierarchy item=getItem(mch.id);
+		item.cr_type_desc=mch.cr_type_desc;
+		item.mcr_period=mch.mcr_period;
+		item.hindex=mch.hindex;
+		item.htimes=mch.htimes;
+		item.h_name=mch.h_name;
+		item.goods_htimes = mch.goods_htimes;
+		item.movie_hitmes = mch.movie_hitmes;
+		item.c_time=new Timestamp(new Date().getTime());
+		return jcTemplate.INSTANCE.update(item);
+	}
+
+	/**
+	 *
+	 * 设置规则前缀
+	 * @param memberCardRule
+	 * @return
+	 */
+	public String setPrefix(MemberCardHierarchy mch,BigInteger pid){
+		MemberCardHierarchy entity = getItem(mch.id);
+		if(null == entity) {
+			return "会员等级找不到";
+		}
+		if(!pid.equals(entity.mcRule.pid)){
+			return "会员等级找不到";
+		}
+		entity.prefix = mch.prefix;
+		entity.c_time = new Timestamp(new Date().getTime());
+		jcTemplate.update(entity);
+		return null;
+	}
+	
+	/**
+	 *
+	 * 设置优惠信息
+	 * @param memberCardRule
+	 * @return
+	 */
+	public String setBenefit(MemberCardHierarchy mch,BigInteger pid){
+		MemberCardHierarchy entity = getItem(mch.id);
+		if(null == entity) {
+			return "会员等级找不到";
+		}
+		if(!pid.equals(entity.mcRule.pid)){
+			return "会员等级找不到";
+		}
+		entity.cr_discount = mch.cr_discount;
+		entity.bapa = mch.bapa;
+		entity.day_buy_limit = mch.day_buy_limit;
+		entity.show_buy_limit = mch.show_buy_limit;
+		entity.c_time = new Timestamp(new Date().getTime());
+		jcTemplate.update(entity);
+		return null;
+	}
+	
+	public Integer deleteItem(MemberCardHierarchy mch) {
+		//		return MemberCardHierarchyDao.INSTANSE.deleteItem(mch.getId());
+	}
+
+	public JcPage<MemberCardHierarchy> getPage(Long mc_id, JcPage<MemberCardHierarchy> page) {
+		String sql =  "select * from MemberCardHierarchy where mc_id=? and flag!=? order by c_time desc";
+		return jcTemplate.find(MemberCardHierarchy.class, page, sql, mc_id,-1);
+	}
+	
+	public List<MemberCardHierarchy> getAllByMcId(def mc_id) {
+		String sql =  "select * from MemberCardHierarchy where mc_id=? and flag!=? order by c_time desc";
+		return jcTemplate.find(MemberCardHierarchy.class, sql, mc_id,-1);
+	}
+	
+	
+	
+
+	public MemberCardHierarchy  getItem(BigInteger  id) {
+		String sql = "select * from MemberCardHierarchy where id=? and flag!=-1"
+		MemberCardHierarchy mch = jcTemplate.get(MemberCardHierarchy.class, sql, id);
+		if (mch == null) {
+			return null;
+		}
+		mch.mcRule = MemberCardRuleService.INSTANSE.getItem(mch.mc_id);
+		return mch;
+	}
+//	
+//	public MemberCardHierarchy  getItem(BigInteger  id, BigInteger  pid) {
+//		String sql = "select * from MemberCardHierarchy where id=? and flag!=-1"
+//		MemberCardHierarchy mch = jcTemplate.get(MemberCardHierarchy.class, sql, id);
+//		if (mch == null) {
+//			return null;
+//		}
+//		
+//		mch.mcRule = MemberCardRuleService.INSTANSE.getItem(mch.mc_id);
+//		return mch;
+//	}
+	
+	public Integer updateStatus(BigInteger id){
+		MemberCardHierarchy mch=getItem(id);
+		if (mch.flag==0) {
+			mch.flag=1;
+			mch.c_time=new Timestamp(new Date().getTime());
+			return jcTemplate.INSTANCE.update(mch);
+		}else if(mch.flag==1){
+			mch.flag=0;
+			mch.c_time=new Timestamp(new Date().getTime());
+			return jcTemplate.INSTANCE.update(mch);
+		}
+	}
+	public Integer update_status_recharge(BigInteger id){
+		MemberCardHierarchy mch=getItem(id);
+		if (mch.close_recharge==0) {
+			mch.close_recharge=1;
+			mch.c_time=new Timestamp(new Date().getTime());
+			return jcTemplate.INSTANCE.update(mch);
+		}else if(mch.close_recharge==1){
+			mch.close_recharge=0;
+			mch.c_time=new Timestamp(new Date().getTime());
+			return jcTemplate.INSTANCE.update(mch);
+		}
+	}
+	/**
+	 * 返回可以用的会员卡等级
+	 * @param mc_id
+	 * @return
+	 */
+	public List<MemberCardHierarchy> getListAvailable(BigInteger mc_id) {
+		String sql =  "select * from MemberCardHierarchy where mc_id=? and flag!=?  and getmode=? order by hindex asc";
+		return jcTemplate.find(MemberCardHierarchy.class, sql, mc_id,-1, McConstants._mch_get_upgrade_);
+	}
+	
+	/** 返回开启网售的会员等级
+	 * @param mc_id
+	 * @param flag 是否启用
+	 * @return
+	 * */
+	public List<MemberCardHierarchy> getListAvailable(BigInteger mc_id,BigInteger flag) {
+		String sql =  "select * from MemberCardHierarchy where mc_id=? and flag=? order by hindex asc";
+		return jcTemplate.find(MemberCardHierarchy.class, sql, mc_id,flag);
+	}
+	
+	public def update_mcr_hierarchy(MemberCardHierarchy item) {
+		item.c_time = new Timestamp(new Date().getTime());
+		return jcTemplate.update(item);
+	}
+
+	public List<MemberCardHierarchy> get_hs(MemberCardRule mc_rue, String h_num) {
+		String hql = "select mc from MemberCardHierarchy mc where flag!=? and mch_id=? and h_num=?";
+		return jcTemplate.find(hql, -1, mc_rue.id, h_num);
+	}
+	
+	def find_all_hierarchys() {
+		def sql = 'select * from MemberCardHierarchy';
+		def param = [];
+		if(GlobalHolder.proj.root!=1) {
+			sql += ' where mc_id in (select id from MemberCardRule where pid=?)';
+			param.add(GlobalHolder.proj.id);
+		}
+		return jcTemplate.find(MemberCardHierarchy, sql, param.empty?null:param.toArray());
+	}
+	
+	public Integer updataByRecharge(MemberCardHierarchy mch){
+		MemberCardHierarchy item=getItem(mch.id);
+		item.supp_recharge=mch.supp_recharge;
+		item.init_recharge=mch.init_recharge;
+		item.least_recharge=mch.least_recharge;
+		item.c_time=new Timestamp(new Date().getTime());
+		return jcTemplate.INSTANCE.update(item);
+	}	
+	
+	public void sync_mc_his(List<MemberCardHierarchy> new_result, MemberCardRule rule) {
+		Long utimekey = System.currentTimeMillis();
+		for(MemberCardHierarchy new_mc : new_result) {
+			String sql = "select mch.* from mm_member_card_rule rule, mm_member_card_hierarchy mch where mch.mc_id = rule.id and mch.h_num = ? and rule.id=? and rule.flag !=?";
+			List<MemberCardHierarchy> exist_result =  jcTemplate.find(MemberCardHierarchy, sql, new_mc.h_num, rule.id,-1);
+			//List<MemberCardHierarchy> exist_result = memberCardHierarchyDao.find(hql, -1, rule.getId(), new_mc.gethNum());
+			MemberCardHierarchy exist_entity = null;
+			if(exist_result==null||exist_result.isEmpty()) {
+				exist_entity = new_mc;
+				exist_entity.a_time = new Date();
+			} else {
+				exist_entity = exist_result.get(0);
+			}
+			exist_entity.cr_discount = new_mc.cr_discount;
+			exist_entity.cr_type = new_mc.cr_type
+			exist_entity.cr_type_desc= new_mc.cr_type_desc
+			exist_entity.day_buy_limit = new_mc.day_buy_limit
+			exist_entity.h_name = new_mc.h_name
+			exist_entity.h_num = new_mc.h_num
+			exist_entity.init_recharge = new_mc.init_recharge
+			exist_entity.least_recharge = new_mc.least_recharge
+			exist_entity.show_buy_limit = new_mc.show_buy_limit
+			exist_entity.supp_recharge  = new_mc.supp_recharge;
+			exist_entity.getpay  = new_mc.getpay;
+			exist_entity.mc_id = rule.id;
+			exist_entity.flag = 0;
+			exist_entity.utimekey = utimekey;// 更新时间
+			if (exist_entity.id == null) {
+				jcTemplate.save(exist_entity)
+			} else {
+				jcTemplate.update(exist_entity)
+			}
+			
+//			//删除非utimekey数据
+//			String hql = "select mch.* from mm_member_card_rule rule, mm_member_card_hierarchy mch where mch.mc_id = rule.id and mch.utimekey = ? and rule.id=? and rule.flag !=?";
+//			List<MemberCardHierarchy> exist_result = memberCardHierarchyDao.find(hql, -1, rule.getId(), utimekey);
+//			for(MemberCardHierarchy mch : exist_result) {
+//				mch.disable();
+//				memberCardHierarchyDao.saveOrUpdate(mch);
+//			}
+			
+		}
+		//删除非utimekey数据
+		String hql = "select mch.* from mm_member_card_rule rule, mm_member_card_hierarchy mch where mch.mc_id = rule.id and mch.utimekey !=? and rule.id=? and rule.flag !=?";
+		List<MemberCardHierarchy> exist_result = jcTemplate.find(MemberCardHierarchy, hql, utimekey, rule.id, -1);
+		for(MemberCardHierarchy mch : exist_result) {
+			mch.flag = -1;
+			jcTemplate.update(mch);
+		}
+	}
+}

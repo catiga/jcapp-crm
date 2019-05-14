@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[[${str}]] | 员等级详细信息</title>
+<link th:href="@{{sp}/css/bootstrap.min.css(sp=${pub_bucket})}"rel="stylesheet">
+<link thhref="@{{sp}/font-awesome/css/font-awesome.css(sp=${pub_bucket})}"rel="stylesheet">
+<link th:href="@{{sp}/css/animate.css(sp=${pub_bucket})}"rel="stylesheet">
+<link th:href="@{{sp}/css/style.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/jsTree/style.min.css|"rel="stylesheet">
+<link  th:href="@{{sp}/mjolnic-bootstrap-colorpicker/dist/css/bootstrap-colorpicker.min.css(sp=${pub_bucket})}" rel="stylesheet">
+<script th:src="@{{sp}/kindeditor/kindeditor-min.js(sp=${pub_bucket})}"> </script>
+<script>
+var editor;
+KindEditor.ready(function(K) {
+    editor = K.create('textarea[name="mch_detail"]', {
+        uploadJson : '${ctx}/common/upload/for_ke_upload',
+        allowFileManager : true
+    });
+
+    K('input[name=getHtml]').click(function(e) {
+        alert(editor.html());
+    });
+    K('input[name=isEmpty]').click(function(e) {
+        alert(editor.isEmpty());
+    });
+    K('input[name=getText]').click(function(e) {
+        alert(editor.text());
+    });
+    K('input[name=selectedHtml]').click(function(e) {
+        alert(editor.selectedHtml());
+    });
+    K('input[name=setHtml]').click(function(e) {
+        editor.html('<h3>Hello KindEditor</h3>');
+    });
+    K('input[name=setText]').click(function(e) {
+        editor.text('<h3>Hello KindEditor</h3>');
+    });
+    K('input[name=insertHtml]').click(function(e) {
+        editor.insertHtml('<strong>插入HTML</strong>');
+    });
+    K('input[name=appendHtml]').click(function(e) {
+        editor.appendHtml('<strong>添加HTML</strong>');
+    });
+    K('input[name=clear]').click(function(e) {
+        editor.html('');
+    });
+});
+KindEditor.sync();
+</script>
+</head>
+<body>
+	<div id="wrapper">
+		<div th:replace="../common/nav"></div>
+		<div id="page-wrapper" class="gray-bg">
+			<div th:replace="../common/top"></div>
+			<div class="row wrapper border-bottom white-bg page-heading">
+				<div class="col-sm-4">
+					<h2>员等级详细信息</h2>
+					<ol class="breadcrumb">
+						<li><a href="index.html">Home</a></li>
+					</ol>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-lg-12">
+					<div class="x_panel">
+						<div class="x_title">
+							<h2>
+								<button type="button" class="btn btn-warning do_save_mch_detail">保存会员权益</button>
+							</h2>
+							<ul class="nav navbar-right panel_toolbox">
+								<li><a class="collapse-link"><i
+										class="fa fa-chevron-up"></i></a></li>
+								<li class="dropdown"><a href="#" class="dropdown-toggle"
+									data-toggle="dropdown" role="button" aria-expanded="false"><i
+										class="fa fa-wrench"></i></a>
+									<ul class="dropdown-menu" role="menu">
+										<li><a href="javascript:;">暂无</a></li>
+									</ul></li>
+								<li><a class="close-link"><i class="fa fa-close"></i></a></li>
+							</ul>
+							<div class="clearfix"></div>
+						</div>
+						<div class="x_content">
+							<form id="demo-form2" data-parsley-validate
+								class="form-horizontal form-label-left">
+								<div class="form-group">
+									<label class="control-label col-md-3 col-sm-3 col-xs-12">会员等级
+										<span class="required">*</span>
+									</label>
+									<div class="col-md-6 col-sm-6 col-xs-12">
+										<input type="text" class="form-control h_name"
+											placeholder="重新选择会员等级"
+											th:attr="value=${mch.h_name },id=${mch.id}" readonly>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label col-md-3 col-sm-3 col-xs-12"
+										for="role_name">会员政策 <span class="required">*</span></label>
+									<div class="col-md-6 col-sm-6 col-xs-12">
+										<input type="text" class="form-control title"
+											placeholder="重新选择会员等级" th:attr="value=${mch.mcRule.title }"
+											readonly>
+									</div>
+								</div>
+								<div class="form-group" style="display: none">
+									<label class="control-label col-md-3 col-sm-3 col-xs-12">选择颜色标识
+										<span class="required">*</span>
+									</label>
+									<div class="col-md-6 col-sm-6 col-xs-12">
+										<div class="input-group" id="color-picker">
+											<input type="text" th:attr="value=${mch.bgc }"
+												class="form-control bgc" /> <span class="input-group-addon"><i></i></span>
+										</div>
+									</div>
+								</div>
+								<div class="form-group" style="display: none">
+									<label class="control-label col-md-3 col-sm-3 col-xs-12">选择背景图
+									</label>
+									<div class="col-md-6 col-sm-6 col-xs-12">
+										<div class="input-group">
+											<img src="" id="goods_picturelink_img${mch.imgUrl }" /> <input
+												name="goods_picturelink" type="hidden" class="form-control"
+												id="goods_picturelink" th:attr="value=${mch.img_url }">
+											<div id="container">
+												<a class="btn btn-default btn-lg " id="pickfiles" href="#">
+													<i class="glyphicon glyphicon-plus"></i> <sapn>选择文件</sapn>
+												</a>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="control-label col-md-3 col-sm-3 col-xs-12">详细信息
+										<span class="required">*</span>
+									</label>
+									<div class="col-md-6 col-sm-6 col-xs-12">
+										<div class="input-group">
+											<textarea style="height: 500px;" name="mch_detail"
+												class="form-control mch_detail" rows="3" id="mch_detail">[[${mch_detail.content }]]</textarea>
+										</div>
+									</div>
+								</div>
+								<div class="ln_solid"></div>
+								<div class="form-group">
+									<div class="col-md-6 col-sm-6 col-xs-12 col-md-offset-3">
+										<button type="button"
+											class="btn btn-success do_save_mch_detail">保存会员权益</button>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Mainly scripts -->
+	<script th:src="@{{sp}/js/bootstrap.min.js(sp=${pub_bucket})}"></script>
+	<script
+		th:src="@{{sp}/js/plugins/metisMenu/jquery.metisMenu.js(sp=${pub_bucket})}"></script>
+	<script
+		th:src="@{{sp}/js/plugins/slimscroll/jquery.slimscroll.min.js(sp=${pub_bucket})}"></script>
+
+	<!-- Custom and plugin javascript -->
+	<script th:src="@{{sp}/js/inspinia.js(sp=${pub_bucket})}"></script>
+	<script th:src="@{{sp}/js/plugins/pace/pace.min.js(sp=${pub_bucket})}"></script>
+	<script th:src="|${pub_bucket}/js/plugins/jsTree/jstree.min.js|"></script>
+	<script th:src="@{{sp}/third/layer3/layer.js(sp=${pub_bucket})}"
+		type="text/javascript"></script>
+	<script
+		th:src="@{{sp}/mjolnic-bootstrap-colorpicker/dist/js/bootstrap-colorpicker.min.js(sp=${pub_bucket})}"
+		type="text/javascript"></script>
+</body>
+<style>
+.jstree-open>.jstree-anchor>.fa-folder:before {
+	content: "\f07c";
+}
+
+.jstree-default .jstree-icon.none {
+	width: 0;
+}
+</style>
+<script type="text/javascript">
+	$(document).ready(function(){
+		//提交会员权益
+		var mch_detail;
+		var mch_pid;
+		$('.do_save_mch_detail').on("click",function(){
+			mch_id = $(".h_name").attr("id");
+			mch_detail = editor.html();
+			var url = "[[${contextPath}]]" + "/hierarchy/detail/saveDetail";
+			$.post(url,{mch_id:mch_id,mch_detail:mch_detail},function(data){
+				if(data.available){
+					location.href ="[[${contextPath}]]" + "/hierarchy/list?mc_id="+[[${mch.mc_id}]];
+				}else{
+					var code = data.messages[0];
+	                var msg = code;
+	                if(code=="input_param_error") {
+	                    msg = "请检查输入参数";
+	                } else if(code=="common_object_not_found") {
+	                    msg = "等级未找到";
+	                } else if(code=="object_belong_error") {
+	                    msg = "规则归属错误";
+	                } else if(code=="unsupport_operatioin") {
+	                    msg = "前缀不可重复设定";
+	                } else if(code=="mc_not_found") {
+	                    msg = "等级未绑定规则，请联系管理员";
+	                } else if(code=="status_invalid") {
+	                    msg = "外部规则不可设置";
+	                }
+	                layer.msg(msg, {
+	                    icon : 2
+	                });
+				}
+			});
+		});
+	});
+</script>
+
+</html>

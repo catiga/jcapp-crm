@@ -1,0 +1,127 @@
+package com.jeancoder.crm.internal.h5.user
+
+import com.jeancoder.app.sdk.JC
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.crm.ready.constant.SimpleAjax
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.MemberCardRule
+import com.jeancoder.crm.ready.exceptio.ObjectExistExceptio
+import com.jeancoder.crm.ready.mcbridge.MCFactory
+import com.jeancoder.crm.ready.mcbridge.bring.DXMCBringInstance
+import com.jeancoder.crm.ready.mcbridge.bring.MCBring
+import com.jeancoder.crm.ready.mcbridge.constants.MCBringConstants
+import com.jeancoder.crm.ready.mcbridge.dto.MCAuthFix
+import com.jeancoder.crm.ready.mcbridge.ret.MCLocalDetail
+import com.jeancoder.crm.ready.mcbridge.ret.MCRet
+import com.jeancoder.crm.ready.mcbridge.ret.MCRetDetail
+import com.jeancoder.crm.ready.service.AccountProjectMcService
+import com.jeancoder.crm.ready.service.MemberCardHierarchyService
+import com.jeancoder.crm.ready.service.MemberCardRuleService
+import com.jeancoder.crm.ready.util.GlobalHolder
+import com.jeancoder.crm.ready.util.MD5Util
+import com.jeancoder.crm.ready.util.StringUtil
+import com.jeancoder.jdbc.JcTemplate
+
+/**
+ *  绑定会员卡
+ */
+JCLogger  Logger  = LoggerSource.getLogger();
+try {
+	def   pid = JC.internal.param("pid").toString();
+	def   mc_num = JC.internal.param("mc_num");
+	def   mc_pwd = JC.internal.param("mc_pwd");
+	def   mobile = JC.internal.param("mobile");
+	def   apid = JC.internal.param("ap_id").toString();
+	def   s_id = JC.internal.param("s_id").toString();
+	Logger.info("bind_my_card:pid:"+pid+";mc_num" + mc_num+";mc_pwd" +mc_pwd+";mobile" + mobile+";ap_id" + apid+";ap_id" + s_id)
+	if (StringUtil.isEmpty(pid)  || StringUtil.isEmpty(mc_num)  || StringUtil.isEmpty(mc_pwd)  || StringUtil.isEmpty(apid)  || StringUtil.isEmpty(s_id)) {
+		return  SimpleAjax.notAvailable("参数不能为空");
+	}
+	
+	List<MemberCardRule> ruleList = MemberCardRuleService.INSTANSE.getListAvailable(new BigInteger(pid.toString()));
+	if (ruleList == null || ruleList.isEmpty()) {
+		return  SimpleAjax.notAvailable("目前没有可用规则");
+	}
+	MemberCardRule rule = null;
+	for (def item : ruleList) {
+		if (!"0".equals(item.outer_type)) {
+			rule = item
+			break;
+		}
+	}
+	if (rule == null) {
+		return  SimpleAjax.notAvailable("目前没有可用规则");
+	}
+	SimpleAjax ajax = JC.internal.call(SimpleAjax,"ticketingsys", "/store/cinema_by_id", [store_id:s_id])
+	if (!ajax.available) {
+		return ajax;
+	}
+	if (ajax.data == null || ajax.data.size()  == 0) {
+		return SimpleAjax.notAvailable("请添加门店")
+	}
+	
+	def bring =   MCFactory.generate(rule);
+	MCAuthFix fix = new MCAuthFix();
+	fix.pwd = mc_pwd;
+	fix.idnum = mc_num;
+	fix.mobile = mobile;
+	//校验会员卡信息
+	MCRet ret = bring.auth_mc(rule, ajax.data.get(0).store_no, mc_num, mc_pwd, fix, [:])
+	if(!ret.isSuccess()) {
+		if (MCBringConstants._mcb_failed_need_store_.equals(ret.code)) {
+			return  SimpleAjax.notAvailable("请设置门店");
+		}
+		return SimpleAjax.notAvailable(ret.code+":"+ret.msg)
+	}
+	
+	MCRetDetail mc_ret_detail = bring.get_detail(ajax.data.get(0).store_no, mc_num, fix,null);
+	if(!mc_ret_detail.isSuccess()) {
+		return SimpleAjax.notAvailable(mc_ret_detail.code+":"+mc_ret_detail.msg)
+	}
+	MCLocalDetail card_detail_data = mc_ret_detail.detail;
+	//处理新增
+	String card_level_id = card_detail_data.cardLevelId;
+	List<MemberCardHierarchy> result_hs = MemberCardHierarchyService.INSTANSE.getAllByMcId(rule.id);
+	if(result_hs == null|| result_hs.isEmpty()) {
+		return  SimpleAjax.notAvailable("未找到会员等级");
+	}
+	def mch_id = null
+	for (MemberCardHierarchy mch : result_hs) {
+		if (card_level_id.equals(mch.h_num)) {
+			mch_id = mch.id;
+			break;
+		}
+	}
+	if (mch_id ==  null) {
+		mch_id = result_hs.get(0).id;
+	}
+	
+	AccountProjectMC  local_card = null;
+	try {
+		local_card = AccountProjectMcService.INSTANSE.init_local_mc(pid, apid, mc_num, MD5Util.getMD5(mc_pwd));
+	} catch (ObjectExistExceptio e) {
+		return SimpleAjax.notAvailable("会员卡卡号重复")
+	}
+	
+	local_card.balance = card_detail_data.balance;
+	local_card.discount = card_detail_data.discount;
+	local_card.limit_discount_by_num = card_detail_data.purchaseDiscountNum == null?0:card_detail_data.purchaseDiscountNum
+	local_card.mc_level = card_detail_data.cardLevel;
+	local_card.mc_name = card_detail_data.username
+	local_card.mc_mobile = card_detail_data.mobile;
+	local_card.min_recharge_money = card_detail_data.minAddMoney;
+	local_card.period = card_detail_data.period
+	local_card.point = card_detail_data.availableJifen
+	local_card.can_buy_with_online_pay = card_detail_data.canBuyWithOnlinePay
+	local_card.can_recharge = Integer.parseInt(card_detail_data.canRecharge);
+	local_card.goods_discount = card_detail_data.goodsDiscount
+	
+	local_card.mch_id = mch_id;
+	JcTemplate.INSTANCE().update(local_card);
+	return  SimpleAjax.available();
+} catch (Exception e) {
+	Logger.error("绑定会员卡失败", e);
+	return  SimpleAjax.notAvailable("绑定会员卡失败");
+}

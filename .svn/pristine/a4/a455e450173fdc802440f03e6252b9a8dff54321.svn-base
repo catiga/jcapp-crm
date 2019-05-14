@@ -1,0 +1,52 @@
+package com.jeancoder.crm.internal.h5.p
+
+import java.sql.Timestamp
+
+import com.jeancoder.app.sdk.JC
+import com.jeancoder.crm.ready.constant.SimpleAjax
+import com.jeancoder.crm.ready.dto.ProjectFrontConfig
+import com.jeancoder.crm.ready.entity.AccountBasic
+import com.jeancoder.crm.ready.entity.AccountThirdBind
+import com.jeancoder.jdbc.JcTemplate
+
+def part_id = JC.internal.param('part_id');
+def pid = JC.internal.param('pid');
+try {
+	pid = new BigInteger(pid.toString());
+} catch(any) {
+	pid = null;
+}
+
+//获取微信公众号
+ProjectFrontConfig supp_config = JC.internal.call(ProjectFrontConfig, 'project', '/incall/frontconfig', [app_type:'20',pid:pid]);
+if(supp_config==null||supp_config.app_id==null) {
+	//以后统一的返回格式
+	return SimpleAjax.notAvailable('pay_config_error');
+}
+
+def app_id = supp_config.app_id;
+
+def sql = 'select * from AccountThirdBind where flag!=? and pid=? and part_id=? and belong_code=?';
+AccountThirdBind account_info = JcTemplate.INSTANCE().get(AccountThirdBind, sql, -1, pid, part_id, app_id);
+
+if(!account_info) {
+	//需要创建账户信息
+	account_info = new AccountThirdBind();
+	account_info.a_time = new Timestamp(Calendar.getInstance().getTimeInMillis());
+	account_info.belong_code = app_id;
+	account_info.c_time = new Timestamp(Calendar.getInstance().getTimeInMillis());
+	account_info.flag = 0;
+	account_info.part_id = part_id;
+	account_info.pid = pid;
+	account_info.id = JcTemplate.INSTANCE().save(account_info);
+}
+
+def mobile = '';
+if(account_info.account_id) {
+	AccountBasic basic = JcTemplate.INSTANCE().get(AccountBasic, 'select * from AccountBasic where id=?', account_info.account_id);	//最大可能查找手机号
+	if(basic) {
+		mobile = basic.mobile;
+	}
+}
+
+return SimpleAjax.available('', [account_info.id, mobile]);

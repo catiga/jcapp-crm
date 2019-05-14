@@ -1,0 +1,263 @@
+package com.jeancoder.crm.ready.mcbridge
+
+class MCLocalDetail {
+	private String cinemaNum;
+	
+	private String callerId;
+
+	private String cardNumber;
+
+	private String username;
+
+	private String balance;
+
+	private String availableJifen;
+
+	private String period;
+
+	private String discount;
+
+	private String goodsDiscount;
+
+	private String cardLevel;
+
+	private Integer purchaseDiscountNum;
+
+	private String basePrice;
+
+	private String minAddMoney;
+
+	private String lowestPrice;
+
+	private String canRecharge;
+
+	private String canBuyWithOnlinePay;
+
+	private String maxBuyNum;
+
+	private String canUse;
+
+	private String canBuyNum;
+
+	private String globalCanBuyNum;
+
+	private String overLimitForbidBuy;
+
+	private String cardLevelId;
+
+	private String cardTypeId;
+
+	private String cardType;
+
+	private String cardStatus;
+
+	private String mobile;
+
+	public String getCinemaNum() {
+		return cinemaNum;
+	}
+
+	public void setCinemaNum(String cinemaNum) {
+		this.cinemaNum = cinemaNum;
+	}
+
+	public String getCallerId() {
+		return callerId;
+	}
+
+	public void setCallerId(String callerId) {
+		this.callerId = callerId;
+	}
+
+	public String getCardNumber() {
+		return cardNumber;
+	}
+
+	public void setCardNumber(String cardNumber) {
+		this.cardNumber = cardNumber;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getBalance() {
+		return balance;
+	}
+
+	public void setBalance(String balance) {
+		this.balance = balance;
+	}
+
+	public String getAvailableJifen() {
+		return availableJifen;
+	}
+
+	public void setAvailableJifen(String availableJifen) {
+		this.availableJifen = availableJifen;
+	}
+
+	public String getPeriod() {
+		return period;
+	}
+
+	public void setPeriod(String period) {
+		this.period = period;
+	}
+
+	public String getDiscount() {
+		return discount;
+	}
+
+	public void setDiscount(String discount) {
+		this.discount = discount;
+	}
+
+	public String getGoodsDiscount() {
+		return goodsDiscount;
+	}
+
+	public void setGoodsDiscount(String goodsDiscount) {
+		this.goodsDiscount = goodsDiscount;
+	}
+
+	public String getCardLevel() {
+		return cardLevel;
+	}
+
+	public void setCardLevel(String cardLevel) {
+		this.cardLevel = cardLevel;
+	}
+
+	public Integer getPurchaseDiscountNum() {
+		return purchaseDiscountNum;
+	}
+
+	public void setPurchaseDiscountNum(Integer purchaseDiscountNum) {
+		this.purchaseDiscountNum = purchaseDiscountNum;
+	}
+
+	public String getBasePrice() {
+		return basePrice;
+	}
+
+	public void setBasePrice(String basePrice) {
+		this.basePrice = basePrice;
+	}
+
+	public String getMinAddMoney() {
+		return minAddMoney;
+	}
+
+	public void setMinAddMoney(String minAddMoney) {
+		this.minAddMoney = minAddMoney;
+	}
+
+	public String getLowestPrice() {
+		return lowestPrice;
+	}
+
+	public void setLowestPrice(String lowestPrice) {
+		this.lowestPrice = lowestPrice;
+	}
+
+	public String getCanRecharge() {
+		return canRecharge;
+	}
+
+	public void setCanRecharge(String canRecharge) {
+		this.canRecharge = canRecharge;
+	}
+
+	public String getCanBuyWithOnlinePay() {
+		return canBuyWithOnlinePay;
+	}
+
+	public void setCanBuyWithOnlinePay(String canBuyWithOnlinePay) {
+		this.canBuyWithOnlinePay = canBuyWithOnlinePay;
+	}
+
+	public String getMaxBuyNum() {
+		return maxBuyNum;
+	}
+
+	public void setMaxBuyNum(String maxBuyNum) {
+		this.maxBuyNum = maxBuyNum;
+	}
+
+	public String getCanUse() {
+		return canUse;
+	}
+
+	public void setCanUse(String canUse) {
+		this.canUse = canUse;
+	}
+
+	public String getCanBuyNum() {
+		return canBuyNum;
+	}
+
+	public void setCanBuyNum(String canBuyNum) {
+		this.canBuyNum = canBuyNum;
+	}
+
+	public String getGlobalCanBuyNum() {
+		return globalCanBuyNum;
+	}
+
+	public void setGlobalCanBuyNum(String globalCanBuyNum) {
+		this.globalCanBuyNum = globalCanBuyNum;
+	}
+
+	public String getOverLimitForbidBuy() {
+		return overLimitForbidBuy;
+	}
+
+	public void setOverLimitForbidBuy(String overLimitForbidBuy) {
+		this.overLimitForbidBuy = overLimitForbidBuy;
+	}
+
+	public String getCardLevelId() {
+		return cardLevelId;
+	}
+
+	public void setCardLevelId(String cardLevelId) {
+		this.cardLevelId = cardLevelId;
+	}
+
+	public String getCardTypeId() {
+		return cardTypeId;
+	}
+
+	public void setCardTypeId(String cardTypeId) {
+		this.cardTypeId = cardTypeId;
+	}
+
+	public String getCardType() {
+		return cardType;
+	}
+
+	public void setCardType(String cardType) {
+		this.cardType = cardType;
+	}
+
+	public String getCardStatus() {
+		return cardStatus;
+	}
+
+	public void setCardStatus(String cardStatus) {
+		this.cardStatus = cardStatus;
+	}
+
+	public String getMobile() {
+		return mobile;
+	}
+
+	public void setMobile(String mobile) {
+		this.mobile = mobile;
+	}
+}

@@ -1,0 +1,42 @@
+package com.jeancoder.crm.ready.dto.order
+
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.mcbridge.ret.MCLocalDetail
+import com.jeancoder.crm.ready.mcbridge.ret.MCRetDetail
+
+class AccountMcDto {
+	String cn;
+	String levelname;
+	String balance;
+	String mcmobile;
+	String mcname;
+	String point;
+	
+	public AccountMcDto(AccountProjectMC account) {
+		this.cn = account.mc_num;
+		this.levelname = account.mc_level;
+		this.mcmobile = account.mc_mobile;
+		this.mcname = account.mc_name;
+		this.balance = account.balance;
+	}
+	
+	
+	public AccountMcDto(AccountProjectMC account, MemberCardHierarchy mch) {
+		this.cn = account.mc_num;
+		this.levelname = mch.h_name;
+		this.mcmobile = account.mc_mobile;
+		this.mcname = account.mc_name;
+		this.balance = account.balance;
+	}
+	
+	
+	public AccountMcDto(MCLocalDetail detail) {
+		this.cn = detail.cardNumber;
+		this.levelname = detail.cardLevel;
+		this.mcmobile = detail.mobile;
+		this.mcname = detail.username;
+		this.balance = detail.balance
+	}
+	
+}

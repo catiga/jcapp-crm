@@ -1,0 +1,150 @@
+package com.jeancoder.crm.internal.api.order
+
+import com.jeancoder.app.sdk.JC
+import com.jeancoder.app.sdk.source.CommunicationSource
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.crm.entry.predo.detail
+import com.jeancoder.crm.ready.common.AvailabilityStatus
+import com.jeancoder.crm.ready.constant.JsConstants
+import com.jeancoder.crm.ready.constant.SimpleAjax
+import com.jeancoder.crm.ready.dto.order.AccountMcDto
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.MemberCardHierarchySubjoin
+import com.jeancoder.crm.ready.entity.MemberCardRule
+import com.jeancoder.crm.ready.mcbridge.MCFactory
+import com.jeancoder.crm.ready.mcbridge.bring.MCBring
+import com.jeancoder.crm.ready.mcbridge.constants.MCBringConstants
+import com.jeancoder.crm.ready.mcbridge.dto.ItemDto
+import com.jeancoder.crm.ready.mcbridge.dto.MCAuthFix
+import com.jeancoder.crm.ready.mcbridge.dto.MCCompute
+import com.jeancoder.crm.ready.mcbridge.ret.MCRetDetail
+import com.jeancoder.crm.ready.service.AccountProjectMcService
+import com.jeancoder.crm.ready.service.MemberCardHierarchyService
+import com.jeancoder.crm.ready.service.MemberCardHierarchySubjoinService
+import com.jeancoder.crm.ready.service.MemberCardRuleService
+import com.jeancoder.crm.ready.util.AccountProjectMCUtil
+import com.jeancoder.crm.ready.util.JackSonBeanMapper
+import com.jeancoder.crm.ready.util.MoneyUtil
+import com.jeancoder.crm.ready.util.StringUtil
+
+/*
+ * 计算金额
+ */
+JCLogger Logger = LoggerSource.getLogger(this.getClass().getName()+".mc_goods_price");
+def t_num =   new Date().getTime();
+t_num = t_num.toString() + new Random().nextInt(1000).toString();
+MCCompute mcc = new MCCompute();
+try {
+	String p = CommunicationSource.getParameter("p"); // 加密字符串
+	def pid = CommunicationSource.getParameter("pid");
+	def sid = CommunicationSource.getParameter("sid");
+	Logger.info('{t_num=' + t_num + ',p='+p +  ',pid=' + pid+  ',sid=' + sid);
+	if (StringUtil.isEmpty(p) || pid == null || StringUtil.isEmpty(pid.toString())) {
+		mcc.code = "1000";
+		mcc.msg = JsConstants.input_param_null;
+		return mcc;
+	}
+	pid = new BigInteger(pid.toString());
+	def  deto  = JackSonBeanMapper.jsonToMap(p);
+	def card_code = deto.card_code;
+	if (StringUtil.isEmpty(card_code)) {
+		mcc.code = "1000";
+		mcc.msg = JsConstants.input_param_null;
+		return  mcc;
+	}
+	card_code = AccountProjectMCUtil.getMcNum(card_code);
+	AccountProjectMC account =  AccountProjectMcService.INSTANSE.get_normal_mc_by_num(pid,card_code);
+	if (account == null) {
+		mcc.code = "1000";
+		mcc.msg = "未找到会员卡";
+		return  mcc;
+	}
+	MemberCardHierarchy mch = MemberCardHierarchyService.INSTANSE.getItem(account.mch_id);
+	if (account == null) {
+		mcc.code = "1000";
+		mcc.msg = "会员等级未找到"
+		return  mcc;
+	}
+	if (mch.mcRule == null) {
+		mcc.code = "1000";
+		mcc.msg = "会员规则未找到"
+		return  mcc;
+	}
+	
+	/*
+	String c_id = null;
+	SimpleAjax ajax = JC.internal.call(SimpleAjax,"ticketingsys", "/store/cinema_by_id", [pid:pid,store_id:sid]);
+	if (ajax != null && ajax.isAvailable() && ajax.data != null && ajax.data.size() > 0) {
+		c_id = ajax.data.get(0).store_no;
+	}
+	def param = [:]
+	param['pid'] = pid;
+	param['account'] = account;
+	param['mch'] = mch;
+	def bring =  MCFactory.generate(mch.mcRule);
+	MCAuthFix auth =  new MCAuthFix(account.mc_num, account.mc_mobile, account.mc_pwd);
+	MCRetDetail detail = bring.get_detail(c_id, card_code, auth, param);
+	// 查询成功
+	if (!detail.isSuccess()) {
+		mcc.code = detail.code;
+		mcc.msg = detail.msg;
+		return  mcc;
+	}
+	*/
+	if(mch.mcRule.outer_type=='10010') {
+		mcc.code = "1000";
+		mcc.msg = JsConstants.unsupport_operatioin;
+	}
+	def c_id = mch.mcRule.sid + '';
+	def auth = null;
+	def bring =  MCFactory.generate(mch.mcRule);
+	def param = [:]
+	param['pid'] = pid;
+	param['account'] = account;
+	param['mch'] = mch;
+	MCRetDetail detail = bring.get_detail(c_id, card_code, auth, param);
+	// 查询成功
+	if (!detail.isSuccess()) {
+		mcc.code = detail.code;
+		mcc.msg = detail.msg;
+		return  mcc;
+	}
+	
+	mcc.accountMc = new AccountMcDto(detail.detail);
+	def list = deto.g;
+	List<ItemDto> goods_List = new ArrayList<ItemDto>();
+	for (def dto : list) {
+		ItemDto item = new ItemDto();
+		item.id = dto[0].toString();
+		item.tycode = dto[1].toString();
+		item.cat_ids = dto[2].toString();
+		item.price = dto[3].toString();
+		item.num = dto[4].toString();
+		goods_List.add(item);
+	}
+	mcc = bring.compute_mc_goods_price(account, c_id,goods_List, param);
+	AccountMcDto amd = new AccountMcDto(account,mch);
+	mcc.accountMc = amd;
+	return mcc;
+} catch (Exception e) {
+	Logger.error("计算会员价失败", e);
+	mcc.code = JsConstants.unknown;
+	mcc.msg = "计算会员价失败"
+	return mcc;
+} finally {
+	Logger.info('{t_num= '+t_num+ ' , rules:'+ JackSonBeanMapper.toJson(mcc)+'}');
+}
+
+public def isCat(def set_cat, def cat_ids) {
+	if (cat_ids == null) {
+		return false;
+	}
+	for (def cat: cat_ids) {
+		if(set_cat.equals(cat_ids)) {
+			return true;
+		}
+	}
+	return false;
+}

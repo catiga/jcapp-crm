@@ -1,0 +1,117 @@
+package com.jeancoder.crm.interceptor.mod
+
+import com.jeancoder.annotation.urlmapped
+import com.jeancoder.annotation.urlpassed
+import com.jeancoder.app.sdk.JC
+import com.jeancoder.core.http.JCRequest
+import com.jeancoder.crm.ready.dto.SysProjectInfo
+import com.jeancoder.crm.ready.dto.sys.AppFunction
+import com.jeancoder.crm.ready.dto.sys.SysFunction
+import com.jeancoder.crm.ready.util.FuncUtil
+import com.jeancoder.crm.ready.util.GlobalHolder
+import com.jeancoder.crm.ready.util.JackSonBeanMapper
+import com.jeancoder.crm.ready.util.NativeUtil
+
+@urlmapped("/")
+@urlpassed(['/api','/h5'])
+
+
+JCRequest request = JC.request.get();
+def uri = request.getRequestURI();
+def context = request.getContextPath();
+if(request.getHeader("x-requested-with")!=null&&request.getHeader("x-requested-with").equalsIgnoreCase("XMLHttpRequest")) {
+	return true;
+}
+
+SysFunction mod_g_1 = FuncUtil.build(1, '会员规则管理', null, 'index', 'fa-shopping-cart');
+SysFunction mod_g_2 = FuncUtil.build(3, '注册用户与会员', null, 'user', 'fa-shopping-cart');
+
+SysFunction mod_g_3 = FuncUtil.build(2, '预制卡管理', null, 'predo', 'fa-shopping-cart');
+SysFunction mod_g_3_1 = FuncUtil.build(201, '预制卡订单', 2, 'predo/index', 'fa-shopping-cart', 2);
+
+SysFunction mod_g_2_2 = FuncUtil.build(302, '会员管理', 3, 'mc/list', 'fa-shopping-cart', 2);
+SysFunction mod_g_2_1 = FuncUtil.build(301, '注册用户管理', 3, 'user/index', 'fa-shopping-cart', 2);
+
+List<SysFunction> result = [mod_g_1];
+result.addAll([mod_g_3, mod_g_3_1]);
+result.addAll([mod_g_2, mod_g_2_2, mod_g_2_1]);
+
+AppFunction mod_g_main = new AppFunction();
+mod_g_main.func_name = '会员管理';
+mod_g_1.func_info = '设置会员卡规则以及等级规则的详细信息';
+mod_g_2_2.func_info = '设置预制卡的详细信息';
+mod_g_2_1.func_info = '可查看会员卡的详细信息';
+mod_g_3_1.func_info = '可查看会员卡注册的详细信息';
+def appFun=[];
+appFun.addAll([mod_g_1, mod_g_2, mod_g_3]);
+def appFunChild=[];
+appFunChild.addAll([ mod_g_2_1, mod_g_2_1, mod_g_3_1]);
+request.setAttribute("appMain", mod_g_main);
+request.setAttribute('appFun', appFun);
+request.setAttribute("appFunChild", appFunChild);
+
+def uri_without_code = uri[context.length()+1..-1];
+if(uri_without_code.endsWith("/"))
+	uri_without_code = uri_without_code[0..-2];
+request.setAttribute("__now_uri_", uri_without_code);
+
+List<AppFunction> functions = NativeUtil.connectAsArray(AppFunction.class, 'project', '/incall/mod/mods', [pid:GlobalHolder.getProj().id,user_id:GlobalHolder.getToken().user.id,app_code:'crm', accept:URLEncoder.encode(JackSonBeanMapper.listToJson(result), 'UTF-8')]);
+Map<AppFunction, List<AppFunction>> my_funcs = my_funcs(functions);
+request.setAttribute("user_roles_functions", my_funcs);
+return true;
+
+def get_by_id(def id, List<AppFunction> functions) {
+	for(AppFunction f : functions) {
+		if(f.id==id) {
+			return f;
+		}
+	}
+	return null;
+}
+
+def Map<AppFunction, List<AppFunction>> my_funcs(List<AppFunction> functions) {
+	Map<AppFunction, List<AppFunction>> parent_functions = new LinkedHashMap<AppFunction, List<AppFunction>>();
+	SysProjectInfo project = GlobalHolder.getProj();
+	if(functions!=null&&!functions.isEmpty()) {
+		for(AppFunction f : functions) {
+			AppFunction parent_f = null;
+			List<AppFunction> result_f = new ArrayList<AppFunction>();
+			
+			//只取两级的判断
+			if(f.getLevel().equals(1)) {
+				//表示当前这个为一级模块
+				parent_f = f;
+				for(AppFunction f_2 : functions) {
+					if('0000'.equals(f_2.getFunc_type())){
+						continue;
+					}
+					if(f_2.getParent_id()!=null&&f_2.getParent_id().equals(parent_f.getId())) {
+						if(f_2.getLimpro().equals("0")&&!project.root) {
+							continue;
+						}
+						result_f.add(f_2);
+					}
+				}
+			} else if(f.getLevel().equals(2)) {
+				//表示当前这个为二级模块
+				parent_f = get_by_id(f.getParent_id(), functions);
+				if(parent_f==null) {
+					continue;
+				}
+				for(AppFunction f_2 : functions) {
+					if('0000'.equals(f_2.getFunc_type())){
+						continue;
+					}
+					if(f_2.getParent_id()!=null&&f_2.getParent_id().equals(parent_f.getId())) {
+						if(f_2.getLimpro().equals("0")&&!project.root) {
+							continue;
+						}
+						result_f.add(f_2);
+					}
+				}
+			}
+			parent_functions.put(parent_f, result_f);
+		}
+	}
+	return parent_functions;
+}

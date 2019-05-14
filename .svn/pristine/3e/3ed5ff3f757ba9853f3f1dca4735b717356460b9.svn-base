@@ -1,0 +1,245 @@
+package com.jeancoder.crm.internal.api.order
+
+import com.jeancoder.app.sdk.source.CommunicationSource
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.crm.ready.common.AvailabilityStatus
+import com.jeancoder.crm.ready.constant.JsConstants
+import com.jeancoder.crm.ready.dto.order.AccountMcDto
+import com.jeancoder.crm.ready.dto.order.GoodsDto
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.MemberCardHierarchySubjoin
+import com.jeancoder.crm.ready.mcbridge.MCCompute
+import com.jeancoder.crm.ready.service.AccountProjectMcService
+import com.jeancoder.crm.ready.service.MemberCardHierarchyService
+import com.jeancoder.crm.ready.service.MemberCardHierarchySubjoinService
+import com.jeancoder.crm.ready.util.AccountProjectMCUtil
+import com.jeancoder.crm.ready.util.JackSonBeanMapper
+import com.jeancoder.crm.ready.util.MoneyUtil
+import com.jeancoder.crm.ready.util.StringUtil
+
+/*
+ * 计算金额
+ */
+JCLogger Logger = LoggerSource.getLogger(this.getClass().getName()+".mc_goods_price");
+def t_num =   new Date().getTime();
+t_num = t_num.toString() + new Random().nextInt(1000).toString();
+MCCompute mcc = new MCCompute();
+try {
+	String p = CommunicationSource.getParameter("p"); // 加密字符串
+	def pid = CommunicationSource.getParameter("pid");
+	Logger.info('{t_num=' + t_num + ',p='+p +  ',pid=' + pid);
+	if (StringUtil.isEmpty(p) || pid == null || StringUtil.isEmpty(pid.toString())) {
+		mcc.code = "1000";
+		mcc.msg = JsConstants.input_param_null;
+		return mcc;
+	}
+	pid = new BigInteger(pid.toString());
+	def  deto  = JackSonBeanMapper.jsonToMap(p);
+	def card_code = deto.card_code;
+//	println card_code;
+	if (StringUtil.isEmpty(card_code)) {
+		mcc.code = "1000";
+		mcc.msg = JsConstants.input_param_null;
+		return  mcc;
+	}
+	card_code = AccountProjectMCUtil.getMcNum(card_code);
+	
+	AccountProjectMC account =  AccountProjectMcService.INSTANSE.get_normal_mc_by_num(pid,card_code);
+	if (account == null) {
+		mcc.code = "1000";
+		mcc.msg = "未找到会员卡";
+		return  mcc;
+	}
+	MemberCardHierarchy mch = MemberCardHierarchyService.INSTANSE.getItem(account.mch_id);
+	if (account == null) {
+		mcc.code = "1000";
+		mcc.msg = JsConstants.object_not_exist;
+		return  mcc;
+	}
+	
+	List<MemberCardHierarchySubjoin> mchsLisat = MemberCardHierarchySubjoinService.INSTANSE.getList(mch.id);
+	def map = get(mchsLisat);
+	def list = deto.g;
+	String payAmount = "0";
+	String totalAmount = "0";
+	List<GoodsDto> goods_List = new ArrayList<GoodsDto>();
+	for (def dto : list) {
+		def goods_id = dto[0];
+		def tycode = dto[1];
+		def cat_ids = dto[2];
+		def price = dto[3];
+		def num = dto[4];
+		
+		// 获取所有商品的通用折扣
+		String all_discount = map.get("0000__0");
+		String mch_discount = mch.cr_discount;
+		//if (!StringUtil.isEmpty(all_discount)) {
+		// 100 商品 直接用会员通用折扣
+		if (!"100".equals(tycode) && StringUtil.isEmpty(all_discount) && !StringUtil.isEmpty(mch_discount)) {
+			// 非单品 且所有卖品折扣的通用折扣为空 且会员卡等级的折扣不为空， 则取会员卡等级的折扣
+			GoodsDto g1 = new GoodsDto();
+			g1.id = goods_id.toString();
+			g1.price = price;
+			g1.total_amount = MoneyUtil.multiple(price.toString(), num.toString());
+			g1.mc_price = compute(price.toString(),mch_discount);
+			g1.pay_amount = MoneyUtil.multiple(g1.mc_price, num.toString());
+			g1.discount = MoneyUtil.get_yuan_from_cent(mch_discount);
+			payAmount = MoneyUtil.add(payAmount, g1.pay_amount );
+			totalAmount = MoneyUtil.add(totalAmount, g1.total_amount );
+			goods_List.add(g1);
+			continue;
+		} else if (!"100".equals(tycode) && !StringUtil.isEmpty(all_discount)) {
+			// 非单品 且所有卖品折扣的通用折扣不为空， 则取所有卖品折扣的通用折扣
+			GoodsDto g1 = new GoodsDto();
+			g1.id = goods_id.toString();
+			g1.price = price;
+			g1.total_amount = MoneyUtil.multiple(price.toString(), num.toString());
+			g1.mc_price = compute(price.toString(),all_discount);
+			g1.pay_amount =  MoneyUtil.multiple(g1.mc_price, num.toString());
+			g1.discount = MoneyUtil.get_yuan_from_cent(all_discount);
+			payAmount = MoneyUtil.add(payAmount, g1.pay_amount );
+			totalAmount = MoneyUtil.add(totalAmount, g1.total_amount );
+			goods_List.add(g1);
+			continue;
+		}
+		
+		// 先寻找商品折扣
+		String set_discount = map.get("0011__"+goods_id.toString());
+		if (!StringUtil.isEmpty(set_discount)) {
+			GoodsDto g1 = new GoodsDto();
+			
+			g1.id = goods_id.toString();
+			g1.price = price;
+			g1.total_amount = MoneyUtil.multiple(price.toString(), num.toString());
+			
+			g1.mc_price = compute(price.toString(),set_discount);
+			g1.pay_amount =  MoneyUtil.multiple(g1.mc_price, num.toString());
+			g1.discount = MoneyUtil.get_yuan_from_cent(set_discount);
+			
+			payAmount = MoneyUtil.add(payAmount, g1.pay_amount );
+			totalAmount = MoneyUtil.add(totalAmount, g1.total_amount );
+			goods_List.add(g1);
+			continue;
+		}
+		// 寻找分组
+		if (cat_ids != null) {
+			boolean flag = false;
+			for (def cat : cat_ids) {
+				String cat_discount = map.get("0010__" + cat.toString());
+				if (!StringUtil.isEmpty(cat_discount)) {
+					GoodsDto g1 = new GoodsDto();
+					g1.id = goods_id.toString();
+					g1.price = price;
+					g1.total_amount = MoneyUtil.multiple(price.toString(), num.toString());
+					g1.mc_price = compute(price.toString(),cat_discount);
+					g1.pay_amount =  MoneyUtil.multiple(g1.mc_price, num.toString());
+					g1.discount = MoneyUtil.get_yuan_from_cent(cat_discount);
+					payAmount = MoneyUtil.add(payAmount, g1.pay_amount );
+					totalAmount = MoneyUtil.add(totalAmount, g1.total_amount );
+					goods_List.add(g1);
+					flag = true;
+					break;
+				}
+			}
+			if (flag) {
+				continue;
+			}
+		}
+		//取所有商品
+		//String all_discount = map.get("0000__0");
+		if (!StringUtil.isEmpty(all_discount)) {
+			GoodsDto g1 = new GoodsDto();
+			g1.id = goods_id.toString();
+			g1.price = price;
+			g1.total_amount = MoneyUtil.multiple(price.toString(), num.toString());
+			g1.mc_price = compute(price.toString(),all_discount);
+			g1.pay_amount =  MoneyUtil.multiple(g1.mc_price, num.toString());
+			g1.discount = MoneyUtil.get_yuan_from_cent(all_discount);
+			payAmount = MoneyUtil.add(payAmount, g1.pay_amount );
+			totalAmount = MoneyUtil.add(totalAmount, g1.total_amount );
+			goods_List.add(g1);
+			continue;
+		}
+		//获取会员卡等级的折扣
+//		println "等级信息" + JackSonBeanMapper.toJson(mch);
+		if (!StringUtil.isEmpty(mch_discount)) {
+			GoodsDto g1 = new GoodsDto();
+			g1.id = goods_id.toString();
+			g1.price = price;
+			g1.total_amount = MoneyUtil.multiple(price.toString(), num.toString());
+			g1.mc_price = compute(price.toString(),mch_discount);
+			g1.pay_amount = MoneyUtil.multiple(g1.mc_price, num.toString());
+			g1.discount = MoneyUtil.get_yuan_from_cent(mch_discount);
+			payAmount = MoneyUtil.add(payAmount, g1.pay_amount );
+			totalAmount = MoneyUtil.add(totalAmount, g1.total_amount );
+			goods_List.add(g1);
+			continue;
+		}
+		// 按原价返回
+		GoodsDto g1 = new GoodsDto();
+		g1.id = goods_id.toString()
+		g1.price = price;
+		g1.total_amount = MoneyUtil.multiple(price.toString(), num.toString());
+		g1.mc_price = price;
+		g1.pay_amount = MoneyUtil.multiple(g1.mc_price, num.toString());
+		g1.discount = "0";
+		payAmount = MoneyUtil.add(payAmount, g1.pay_amount );
+		totalAmount = MoneyUtil.add(totalAmount, g1.total_amount );
+		goods_List.add(g1);
+	}
+//	[goods_id, [cat_ids, cat_ids], price, num]
+	AccountMcDto amd = new AccountMcDto(account,mch);
+	mcc.accountMc = amd;
+	mcc.code = "0";
+	mcc.items = goods_List;
+	mcc.totalAmount = totalAmount;
+	mcc.offerAmount = MoneyUtil.add(mcc.totalAmount, "-"+payAmount)
+	return mcc;
+} catch (Exception e) {
+	Logger.error("计算会员价失败", e);
+	mcc.code = JsConstants.unknown;
+	mcc.msg = "计算会员价失败"
+	return mcc;
+} finally {
+	Logger.info('{t_num= '+t_num+ ' , rules:'+ JackSonBeanMapper.toJson(mcc)+'}');
+}
+
+
+public Map<String,String> get(List<MemberCardHierarchySubjoin> list) {
+	Map<String,String> map = new HashMap<String,String>();
+	if (list == null || list.size() == 0) {
+		return map;
+	}
+	for (MemberCardHierarchySubjoin dto : list) {
+		String key = dto.set_type + "__"+ dto.set_id.toString();
+		String value = dto.set_discount.toString();
+		map.put(key,value);
+	}
+	return map;
+}
+
+public String compute(String money,String set_discount) {
+	if (Integer.parseInt(set_discount) < 1 || Integer.parseInt(set_discount) > 999) {
+		return money;
+	} 
+	String m = MoneyUtil.multiple(money, set_discount);
+	m = MoneyUtil.divide(m, "100");// 恢复折扣
+	m = MoneyUtil.divide(m, "10");// 恢复到百分号， 1折=10%
+	BigDecimal bd = new  BigDecimal(m);
+	bd= bd.setScale(0,BigDecimal.ROUND_HALF_UP);
+	return bd.toString();
+}
+
+public def isCat(def set_cat, def cat_ids) {
+	if (cat_ids == null) {
+		return false;
+	}
+	for (def cat: cat_ids) {
+		if(set_cat.equals(cat_ids)) {
+			return true;
+		}
+	}
+	return false;
+}

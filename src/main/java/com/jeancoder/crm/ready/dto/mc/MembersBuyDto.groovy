@@ -1,0 +1,13 @@
+package com.jeancoder.crm.ready.dto.mc
+
+
+class MembersBuyDto {
+	String order_no;
+	Long a_time;
+	String amount;
+	String o_c;
+	String code;
+	String pay_type;
+	String total_amount;
+	String d_num;
+}

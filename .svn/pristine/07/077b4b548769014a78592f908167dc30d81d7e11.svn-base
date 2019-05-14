@@ -1,0 +1,15 @@
+package com.jeancoder.crm.ready.mcbridge
+
+public class MCRetDetail extends MCRet {
+
+	private MCLocalDetail detail;
+
+	public MCLocalDetail getDetail() {
+		return detail;
+	}
+
+	public void setDetail(MCLocalDetail detail) {
+		this.detail = detail;
+	}
+	
+}

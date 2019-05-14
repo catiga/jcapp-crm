@@ -1,0 +1,30 @@
+package com.jeancoder.crm.ready.order
+
+class TradeResult {
+	String code; //0 成功
+	
+	String text; //中文
+	
+	String info;
+	
+	String err_code;
+	
+	String err_code_des;// 错误
+
+	
+	String paycode;
+
+	String trans_get_account;
+	
+	String bank_type;
+	
+	String trans_type = "MC_BALANCE_PAY"; // MC_BALANCE_PAY
+	
+	String trans_pay_amount; //扣款金额
+	
+	String trans_total_amount;//扣款金额
+	
+	String trans_user_id; //acmid
+	
+	String trans_id;// 交易流水号
+}

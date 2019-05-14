@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[[${str}]] | 账户明细</title>
+<link th:href="@{{sp}/css/bootstrap.min.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/font-awesome/css/font-awesome.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/css/animate.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/css/style.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/iCheck/custom.css|" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/jsTree/style.min.css|" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/sweetalert/sweetalert.css|" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/ladda/ladda-themeless.min.css|" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/datapicker/datepicker3.css|" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/select2/select2.min.css|" rel="stylesheet">
+</head>
+
+<body>
+	<div id="wrapper">
+		<div th:replace="../common/nav"></div>
+		<div id="page-wrapper" class="gray-bg">
+			<div th:replace="../common/top"></div>
+			<div class="row wrapper border-bottom white-bg page-heading">
+				<div class="col-sm-4">
+					<h2>交易管理</h2>
+					<ol class="breadcrumb">
+						<li><a href="javascript:;">Home</a></li>
+						<li class="active"><strong>会员卡</strong></li>
+						<li class="active"><strong>账户明细</strong></li>
+					</ol>
+				</div>
+			</div>
+
+			<div class="wrapper wrapper-content animated fadeInRight ecommerce" style="padding-bottom:0px;">
+				<div class="ibox-content m-b-sm border-bottom">
+					<div class="row">
+					    <div class="col-sm-5">
+							<div class="form-group">
+								<label class="control-label">日期</label>
+                                <div class="input-group">
+                                    <input id="start_data" class="input-sm form-control" style="height:36px;"> 
+                                </div>
+							</div>
+						</div>
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label class="control-label">交易类型</label>
+								<select name="store" id="store" class="form-control store">
+									<option value="">全部</option>
+									<option value="8000">开卡订单</option>
+									<option value="8001">充值订单</option>
+									<option value="1000">商品订单</option>
+									<option value="2000">影票订单</option>
+									<option value="2010">预约影票</option>
+									<option value="5000">服务订单</option>
+									<option value="refund">退款订单</option>
+								</select>
+							</div>
+						</div>
+						<div class="col-sm-3" style="align:right;">
+							<div class="form-group">
+							    <label class="control-label"></label>
+                                <div class="input-group">
+                                    <button id="sleet" class="btn btn-info" type="button">查询</button> 
+                                </div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-lg-12 goods_area">
+					<div class="wrapper wrapper-content animated fadeInUp" style="padding-top:0px;">
+						<div class="ibox">
+							<div class="ibox-content">
+								<div class="table-responsive">
+                                	<table class="table table-striped">
+										<thead>
+		                                    <tr>
+		                                    	<th>#</th>
+												<th>订单编号</th>
+												<th>交易时间</th>
+												<th>交易金额</th>
+												<th>交易类型</th>
+												<th>支付渠道</th>
+												<th>操作</th>
+		                                    </tr>
+	                                    </thead>
+										<tbody>
+										    <div class="text-c odd" role="row" th:each="r : ${page.result}">
+                                               <tr>
+                                                    <td></td>
+                                                    <td>[[${r.order_no}]]</td>
+                                                    <td>[[${data.getDate(r.a_time)}]]</td>
+                                                    <td>[[${r.amount/100}]]</td>
+                                                    <td>
+                                                    <div th:if="${r.o_c==8000&&(r.d_num==null||r.d_num=='')}">开卡订单</div>
+                                                    <div th:if="${r.o_c==8001&&(r.d_num==null||r.d_num=='')}">充值订单</div>
+                                                    <div th:if="${r.o_c==1000&&(r.d_num==null||r.d_num=='')}">商品订单</div>
+                                                    <div th:if="${r.o_c==2000&&(r.d_num==null||r.d_num=='')}">影票订单</div>
+                                                    <div th:if="${r.o_c==2010&&(r.d_num==null||r.d_num=='')}">预约影票</div>
+                                                    <div th:if="${r.o_c==5000&&(r.d_num==null||r.d_num=='')}">服务订单</div>
+                                                    <div th:if="${r.d_num!=null&&r.d_num!=''}">退款订单</div>
+                                                    </td>
+                                                    <td>[[${r.pay_type}]]</td>
+                                                    <td style="width: 20%"><a href="javascript:void(0)" class="btn btn-info btn-xs do_edit" th:attr="order_no=${r.order_no},o_c=${r.o_c},d_num=${r.d_num}"><i class="fa fa-pencil"></i>查看详情</a></td>
+                                                </tr>
+                                            </div>
+										</tbody>
+									</table>
+									<div th:replace="../common/page"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div th:replace="../common/foot"></div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+					&times;
+				</button>
+				<h4 class="modal-title" id="myModalLabel">
+					详细信息
+				</h4>
+			</div>
+			<div class="modal-body">
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal" align="center" >关闭</button>
+			</div>
+		</div>
+	  </div>
+    </div>
+	
+	<div id="whs_list_crm" style="display: none; padding-left: 15px; padding-right: 15px; margin-bottom: 30px; max-width: 960px;">
+		<div class="row">
+			<div class="col-md-12 margin-bottom-15">
+				<div id="order_crm"></div>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Mainly scripts -->
+    <script th:src="@{{sp}/js/jquery-2.1.1.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/bootstrap.min.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/plugins/metisMenu/jquery.metisMenu.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/plugins/slimscroll/jquery.slimscroll.min.js(sp=${pub_bucket})}"></script>
+
+    <!-- Custom and plugin javascript -->
+    <script th:src="@{{sp}/js/inspinia.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/plugins/pace/pace.min.js(sp=${pub_bucket})}"></script>
+    <script th:src="|${pub_bucket}/js/plugins/jsTree/jstree.min.js|"></script>  
+    <script th:src="@{{sp}/third/layer3/layer.js(sp=${pub_bucket})}" type="text/javascript"></script>
+    <script th:src="|${pub_bucket}/js/plugins/sweetalert/sweetalert.min.js|"></script>
+    <!-- iCheck -->
+    <script th:src="|${pub_bucket}/js/plugins/iCheck/icheck.min.js|"></script>
+    
+    <!-- Ladda -->
+    <script th:src="|${pub_bucket}/js/plugins/ladda/spin.min.js|"></script>
+    <script th:src="|${pub_bucket}/js/plugins/ladda/ladda.min.js|"></script>
+    <script th:src="|${pub_bucket}/js/plugins/ladda/ladda.jquery.min.js|"></script>
+    <script th:src="|${pub_bucket}/js/plugins/datapicker/bootstrap-datepicker.js|"></script>
+    <script th:src="|${pub_bucket}/js/plugins/select2/select2.full.min.js|"></script>
+	<script>
+		$(document).ready(function() {
+
+			$('#loading-example-btn').click(function() {
+				btn = $(this);
+				simpleLoad(btn, true)
+				simpleLoad(btn, false)
+			});
+		});
+
+		$('#start_data').datepicker({
+	        todayBtn : "linked",
+	        keyboardNavigation : false,
+	        forceParse : false,
+	        calendarWeeks : true,
+	        autoclose : true,
+	        format: "yyyy-mm-dd"
+	 });
+		
+		function simpleLoad(btn, state) {
+			if (state) {
+				btn.children().addClass('fa-spin');
+				btn.contents().last().replaceWith(" Loading");
+			} else {
+				setTimeout(function() {
+					btn.children().removeClass('fa-spin');
+					btn.contents().last().replaceWith(" 分组管理");
+				}, 2000);
+			}
+		}
+	</script>
+</body>
+
+<script type="text/javascript">
+$("#sleet").on("click", function() {
+	 var card_no = '[[${card_no}]]';
+	 var date_time = $("#start_data").val();
+	 var trade_type = $("#store").val(); 
+	 window.location.href = "[[${contextPath}]]/mc/index?card_no="+card_no + "&date_time="+ date_time + "&trade_type="+ trade_type + "&" + Date.parse(new Date())+"&pn="+ 1;
+}); 
+
+$(".do_edit").click(function(){
+    var order_no = $(this).attr("order_no");
+	var o_c = $(this).attr("o_c");
+	var d_num = $(this).attr("d_num");
+	$(this).attr("disabled",true);
+	var btn_dis = $(this);
+	url = '[[${contextPath}]]/mc/get_orderitem?order_no='+order_no+'&o_c='+o_c + '&' + new Date().getTime();
+	$.post(url, {}, function(data){
+	    if(data.available) {
+	    	if(data.data==null||data.data==''){
+	    		layer.msg("会员消费详情查询失败");
+	    	}else{
+	    	btn_dis.attr("disabled",false);
+	    	if(o_c == "8000"&&(d_num==null||d_num=='')){
+	    		   var htmls = "";
+		    	   htmls += "<p>开卡金额：" + data.data.pay_amount/100 + "</p>";
+		    	   htmls += "<p>支付方式：" + data.data.pay_type + "</p>";
+		    	   htmls += "<p>订单编号：" + data.data.order_no + "</p>";
+		    	   htmls += "<p>交易时间：" + data.data.pay_time + "</p>";
+		    	   if(data.data.puid == null || data.data.puid == '' || data.data.puid == 'null'){
+		    		   htmls += "<p>操作人id： </p>";  
+		    	   }else{
+		    		   htmls += "<p>操作人id：" + data.data.puid + "</p>";
+		    	   }
+		    	   if(data.data.puname == null || data.data.puname == ''||data.data.puname == 'null'){
+		    		   htmls += "<p>操作人账号： </p>";  
+		    	   }else{
+		    		   htmls += "<p>操作人账号：" + data.data.puname + "</p>";
+		    	   }
+		    	   $("#order_crm").html(htmls);
+		    	   layer.open({
+						 area : ['25%', '50%'],
+						 type : 1,
+						 content : $("#whs_list_crm")
+				   });
+	    	}else if(o_c == "8001"&&(d_num==null||d_num=='')){
+	    		   var htmls = "";
+		    	   htmls += "<p>充值金额：" + data.data[0].pay_amount/100 + "</p>";
+		    	   htmls += "<p>支付方式：" + data.data[0].pay_type + "</p>";
+		    	   htmls += "<p>订单编号：" + data.data[0].order_no + "</p>";
+		    	   htmls += "<p>交易时间：" + data.data[0].pay_time + "</p>";
+		    	   if(data.data[0].ops =='0'){
+		    		   htmls += "<p>充值渠道：" + "用户申领" + "</p>";
+		    	   }else{
+		    		   htmls += "<p>充值渠道：" + "后台发卡" + "</p>";
+		    	   }
+		    	   if(data.data[0].puid == null || data.data[0].puid == ''||data.data[0].puid == 'null'){
+		    		   htmls += "<p>操作人id："+" "+" </p>";  
+		    	   }else{
+		    		   htmls += "<p>操作人id：" + data.data[0].puid + "</p>";
+		    	   }
+		    	   if(data.data[0].puname == null || data.data[0].puname == '' ||data.data[0].puname == 'null'){
+		    		   htmls += "<p>操作人账号："+" "+" </p>";  
+		    	   }else{
+		    		   htmls += "<p>操作人账号：" + data.data[0].puname + "</p>";
+		    	   }
+		    	   $("#order_crm").html(htmls);
+		    	   layer.open({
+						 area : ['25%', '50%'],
+						 type : 1,
+						 content : $("#whs_list_crm")
+				   });
+	    	}else if(o_c == "1000"&&(d_num==null||d_num=='')){
+	    		   var htmls = "";
+	    		   htmls += "<p>商品名称：";
+		    	   for(var i=0;i<data.data.items.length;i++){
+		    		   if(i == 0){
+		    		       htmls +=  data.data.items[i].goods_name + "(" + data.data.items[i].goods_no + ")x" + data.data.items[i].buy_num+"<br>";   
+		    		   }else{
+		    			   htmls += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + data.data.items[i].goods_name + "(" + data.data.items[i].goods_no + ")x" + data.data.items[i].buy_num+"<br>";
+		    		   }
+		    	   }
+		    	   htmls += "</p>";
+		    	   htmls += "<p>原价：" + data.data.total_amount/100 + "</p>";
+		    	   htmls += "<p>支付金额：" + data.data.pay_amount/100 + "</p>";
+		    	   htmls += "<p>优惠金额：" + (data.data.total_amount-data.data.pay_amount)/100 + "</p>";
+		    	   htmls += "<p>门店：" + data.data.store_name + "</p>";
+		    	   if(data.data.pay_time1 == null ||data.data.pay_time1 == ''||data.data.pay_time1 == 'null'){
+		    		   htmls += "<p>时间：" +" "+"</p>";
+		    	   }else{
+		    		   htmls += "<p>时间：" + data.data.pay_time1 + "</p>";
+		    	   }
+		    	   htmls += "<p>订单编号：" + data.data.order_no + "</p>";
+		    	   $("#order_crm").html(htmls);
+		    	   layer.open({
+						 area : ['25%', '50%'],
+						 type : 1,
+						 content : $("#whs_list_crm")
+				   });
+	    	}else if(o_c == "1000"&&(d_num!=null&&d_num!='')){
+	    		   var htmls = "";
+	    		   htmls += "<p>商品名称：";
+		    	   for(var i=0;i<data.data.items.length;i++){
+		    		   if(i == 0){
+		    		       htmls +=  data.data.items[i].goods_name + "(" + data.data.items[i].goods_no + ")x" + data.data.items[i].buy_num+"<br>";   
+		    		   }else{
+		    			   htmls += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + data.data.items[i].goods_name + "(" + data.data.items[i].goods_no + ")x" + data.data.items[i].buy_num+"<br>";
+		    		   }
+		    	   }
+		    	   htmls += "</p>";
+		    	   htmls += "<p>原价：" + data.data.total_amount/100 + "</p>";
+		    	   htmls += "<p>支付金额：" + data.data.pay_amount/100 + "</p>";
+		    	   htmls += "<p>优惠金额：" + (data.data.total_amount-data.data.pay_amount)/100 + "</p>";
+		    	   htmls += "<p>门店：" + data.data.store_name + "</p>";
+		    	   htmls += "<p>退款时间：" + data.data.refund_time + "</p>";
+		    	   htmls += "<p>订单编号：" + data.data.order_no + "</p>";
+		    	   $("#order_crm").html(htmls);
+		    	   layer.open({
+						 area : ['25%', '50%'],
+						 type : 1,
+						 content : $("#whs_list_crm")
+				   });
+	    	}else if(o_c=="2000"&&(d_num==null||d_num=='')){
+	    		   var htmls = "";
+		    	   htmls += "<p>影片名称：" + data.data.film_name + "</p>";
+		    	   htmls += "<p>影厅：" + data.data.hall_name + "</p>";
+		    	   htmls += "<p>座位：" + data.data.seats + "</p>";
+		    	   htmls += "<p>放映时间：" + data.data.plan_date + "&nbsp;&nbsp;" + data.data.plan_time + "</p>";
+		    	   htmls += "<p>原价：" + data.data.total_amount/100 + "</p>";
+		    	   htmls += "<p>手续费：" + data.data.handle_fee/100 + "</p>";
+		    	   htmls += "<p>支付金额：" + data.data.pay_amount/100 + "</p>";
+		    	   htmls += "<p>优惠金额：" + (data.data.total_amount-data.data.pay_amount)/100 + "</p>";
+		    	   htmls += "<p>门店：" + data.data.store_name + "</p>";
+		    	   if(data.data.pay_time == null ||data.data.pay_time == '' ||data.data.pay_time == 'null'){
+		    		   htmls += "<p>时间：" +" "+"</p>";
+		    	   }else{
+		    		   htmls += "<p>时间：" + data.data.pay_time + "</p>";
+		    	   }
+		    	   htmls += "<p>订单编号：" + data.data.order_no + "</p>";
+		    	   $("#order_crm").html(htmls);
+		    	   layer.open({
+						 area : ['25%', '60%'],
+						 type : 1,
+						 content : $("#whs_list_crm")
+				   });
+	    	}else if(o_c == "2000"&&(d_num!=null&&d_num!='')){
+	    		   var htmls = "";
+		    	   htmls += "<p>影片名称：" + data.data.film_name + "</p>";
+		    	   htmls += "<p>影厅：" + data.data.hall_name + "</p>";
+		    	   htmls += "<p>座位：" + data.data.seats + "</p>";
+		    	   htmls += "<p>放映时间：" + data.data.plan_date + "&nbsp;&nbsp;" + data.data.plan_time + "</p>";
+		    	   htmls += "<p>原价：" + data.data.total_amount/100 + "</p>";
+		    	   htmls += "<p>手续费：" + data.data.handle_fee/100 + "</p>";
+		    	   htmls += "<p>支付金额：" + data.data.pay_amount/100 + "</p>";
+		    	   htmls += "<p>优惠金额：" + (data.data.total_amount-data.data.pay_amount)/100 + "</p>";
+		    	   htmls += "<p>门店：" + data.data.store_name + "</p>";
+		    	   htmls += "<p>退款时间：" + data.data.refund_time + "</p>";
+		    	   htmls += "<p>订单编号：" + data.data.order_no + "</p>";
+		    	   $("#order_crm").html(htmls);
+		    	   layer.open({
+						 area : ['25%', '60%'],
+						 type : 1,
+						 content : $("#whs_list_crm")
+				   });
+	    	}else if(o_c=="2010"&&(d_num==null||d_num=='')){
+	    		   var htmls = "";
+		    	   htmls += "<p>影片名称：" + data.data.film_name + "</p>";
+		    	   htmls += "<p>影厅：" + data.data.hall_name + "</p>";
+		    	   htmls += "<p>座位：" + data.data.seats + "</p>";
+		    	   htmls += "<p>放映时间：" + data.data.plan_date + "&nbsp;&nbsp;" + data.data.plan_time + "</p>";
+		    	   htmls += "<p>原价：" + data.data.total_amount/100 + "</p>";
+		    	   htmls += "<p>手续费：" + data.data.handle_fee/100 + "</p>";
+		    	   htmls += "<p>支付金额：" + data.data.pay_amount/100 + "</p>";
+		    	   htmls += "<p>优惠金额：" + (data.data.total_amount-data.data.pay_amount)/100 + "</p>";
+		    	   htmls += "<p>门店：" + data.data.store_name + "</p>";
+		    	   if(data.data.pay_time == null ||data.data.pay_time == ''||data.data.pay_time == 'null'){
+		    		   htmls += "<p>时间：" +" "+"</p>";
+		    	   }else{
+		    		   htmls += "<p>时间：" + data.data.pay_time + "</p>";
+		    	   }
+		    	   htmls += "<p>订单编号：" + data.data.order_no + "</p>";
+		    	   $("#order_crm").html(htmls);
+		    	   layer.open({
+						 area : ['25%', '60%'],
+						 type : 1,
+						 content : $("#whs_list_crm")
+				   });
+	    	}else if(o_c == "2010"&&(d_num!=null&&d_num!='')){
+	    		   var htmls = "";
+		    	   htmls += "<p>影片名称：" + data.data.film_name + "</p>";
+		    	   htmls += "<p>影厅：" + data.data.hall_name + "</p>";
+		    	   htmls += "<p>座位：" + data.data.seats + "</p>";
+		    	   htmls += "<p>放映时间：" + data.data.plan_date + "&nbsp;&nbsp;" + data.data.plan_time + "</p>";
+		    	   htmls += "<p>原价：" + data.data.total_amount/100 + "</p>";
+		    	   htmls += "<p>手续费：" + data.data.handle_fee/100 + "</p>";
+		    	   htmls += "<p>支付金额：" + data.data.pay_amount/100 + "</p>";
+		    	   htmls += "<p>优惠金额：" + (data.data.total_amount-data.data.pay_amount)/100 + "</p>";
+		    	   htmls += "<p>门店：" + data.data.store_name + "</p>";
+		    	   htmls += "<p>退款时间：" + data.data.refund_time + "</p>";
+		    	   htmls += "<p>订单编号：" + data.data.order_no + "</p>";
+		    	   $("#order_crm").html(htmls);
+		    	   layer.open({
+						 area : ['25%', '60%'],
+						 type : 1,
+						 content : $("#whs_list_crm")
+				   });
+	    	}else if(oc == "5000"&&(d_num==null||d_num=='')){//服务列表
+	    		   var htmls = "";
+		    	   htmls += "<p>服务名称：" + data.data.spname + "</p>";
+		    	   htmls += "<p>服务编码：" + data.data.spno + "</p>";
+		    	   htmls += "<p>服务技师：" + data.data.title + "</p>";
+		    	   htmls += "<p>原价：" + data.data.total_amount/100 + "</p>";
+		    	   htmls += "<p>支付金额：" + data.data.pay_amount/100 + "</p>";
+		    	   htmls += "<p>优惠金额：" + (data.data.total_amount-data.data.pay_amount)/100 + "</p>";
+		    	   htmls += "<p>优惠方式：" + data.data.pay_type + "</p>";
+		    	   htmls += "<p>门店：" + data.data.storename + "</p>";
+		    	   if(data.data.pay_time == null ||data.data.pay_time == '' || data.data.pay_time == 'null'){
+		    		   htmls += "<p>时间：" +" "+"</p>";
+		    	   }else{
+		    		   htmls += "<p>时间：" + data.data.pay_time + "</p>";
+		    	   }
+		    	   htmls += "<p>订单编号：" + data.data.order_no + "</p>";
+		    	   $("#order_crm").html(htmls);
+		    	   layer.open({
+						 area : ['25%', '60%'],
+						 type : 1,
+						 content : $("#whs_list_crm")
+				   });
+	    	}}
+	    }
+	});	 
+});
+</script>
+</html>

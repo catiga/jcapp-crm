@@ -1,0 +1,14 @@
+package com.jeancoder.crm.ready.mcbridge
+
+import com.jeancoder.crm.ready.dto.order.AccountMcDto
+import com.jeancoder.crm.ready.dto.order.GoodsDto
+
+class MCCompute {
+	String code;
+	
+	String msg;
+	List<GoodsDto> items;
+	AccountMcDto accountMc;
+	String offerAmount;
+	String totalAmount;
+}

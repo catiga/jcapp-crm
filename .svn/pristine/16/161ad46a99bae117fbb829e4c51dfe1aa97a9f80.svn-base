@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[[${str}]] | 会员等级管理</title>
+<link th:href="@{{sp}/css/bootstrap.min.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/font-awesome/css/font-awesome.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/css/animate.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/jqui1114/jquery-ui.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/css/style.css(sp=${pub_bucket})}" rel="stylesheet">
+</head>
+
+<body>
+    <div id="wrapper">
+        <div th:replace="../common/nav"></div>
+        <div id="page-wrapper" class="gray-bg">
+            <div th:replace="../common/top"></div>
+            <div class="row wrapper border-bottom white-bg page-heading">
+                <div class="col-sm-4">
+                    <h2>会员等级管理</h2>
+                    <ol class="breadcrumb">
+                        <li><a href="index.html">Home</a></li>
+                        <li class="active"><strong>会员等级</strong></li>
+                    </ol>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="wrapper wrapper-content animated fadeInUp">
+
+                        <div class="ibox">
+                            <div class="ibox-title">
+                                <h5>会员卡信息</h5>
+                                <div class="ibox-tools">
+                                    <div th:if=" ${is_root}">
+                                        <a href="javascript:void(0)"  class="btn btn-primary btn-xs add_mc_hierarchy">添加会员等级</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ibox-content">
+                                <div class="row m-b-sm m-t-sm">
+                                    <div class="col-sm-9 m-b-xs">
+                                       
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <div class="input-group">
+                                            <!-- <input type="text" placeholder="Search" class="input-sm form-control"> 
+                                             <span class="input-group-btn">
+                                                <button type="button" class="btn btn-sm btn-primary"> Go!</button>
+                                            </span> -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>序号</th>
+                                                <th>编号</th>
+                                                <th>等级名称</th>
+                                                <th>等级前缀</th>
+                                                <th>支持充值</th>
+                                                <th>优惠信息</th>
+                                                <!-- <th>手续费</th> -->
+                                                <th>领用方式</th>
+                                                <th style="width: 20%">操作</th>
+                                                <th>状态</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <div class="text-c odd" role="row" th:each="r :  ${page.result}">
+                                                <tr id="tr_${r.id }" class="${tr_clz }">
+                                                    <td>[[${r.hindex }]]</td>
+                                                    <td>[[${r.h_num }]]</td>
+                                                    <td>[[${r.h_name }]]</td>
+                                                    <td>
+                                                        <div th:if="${is_root}">
+	                                                        <div th:if=" ${mcRule.is_outer == 1}">外部继承</div>
+	                                                        <div id="set_prefix_${r.id }"  >
+		                                                         <a href="javascript:void(0)"  th:value="${r.id }"></a>
+		                                                         <a  th:if="${r.prefix==null }" class="set_prefix" th:attr="value=${r.id },prefix=${r.prefix}">点击设置</a>
+		                                                         <a  th:if="${r.prefix!=null}">[[${r.prefix }]]</a>
+	                                                         </div>
+	                                                     </div>
+	                                                    <div th:if="${!is_root}">
+                                                             <a  th:if="${r.prefix!=null}">[[${r.prefix }]]</a>
+	                                                    </div>
+                                                    </td>
+                                                    <td>
+                                                     <div th:if="${is_root}">
+                                                        <div href="javascript:void(0)"  id="modify_recharge_${r.id }" class="modify_recharge" th:value="${r.id }"  th:attr="attr_init_recharge=${r.init_recharge},attr_supp_recharge=${r.supp_recharge },attr_least_recharge=${r.least_recharge} ">
+                                                            <a th:if="${r.supp_recharge == 1  }">支持</a> 
+                                                            <a th:if="${r.supp_recharge != 1 }">不支持</a>
+                                                        </div>
+                                                            <a class="change_status" th:if="${r.close_recharge == 0  }" th:value="${r.id }"> 线上充值已关闭</a> 	
+                                                            <a class="change_status" th:if="${r.close_recharge != 0  }" th:value="${r.id }"> 线上充值已打开</a> 
+                                                           <br/>
+                                                       </div>
+                                                        <div th:if="${!is_root}">
+                                                            <a th:if="${r.supp_recharge == 1  }">支持</a> 
+                                                            <a th:if="${r.supp_recharge != 1 }">不支持</a>
+                                                        </div>
+                                                    </td>
+                                                   
+                                                    <td> 
+                                                     <div th:if="${is_root}">
+                                                        <div class="do_set_sale"  th:attr="value=${r.id },cr_discount=${r.cr_discount},mcr_balance_pay=${r.bapa},day_buy_limit=${r.day_buy_limit},show_buy_limit=${r.show_buy_limit}">
+                                                         会员折扣:
+                                                         <a href="javascript:void(0)" th:if="${r.cr_discount==null||r.cr_discount==0}">未设置</a>
+                                                         <a href="javascript:void(0)" th:if="${r.cr_discount!=null&&r.cr_discount!=0}">[[${r.cr_discount/100}]]折</a> <br/> 
+                                                          是否允许余额支付:             <a href="javascript:void(0)"  th:if="${r.bapa==null}">未设置</a>
+                                                         <a href="javascript:void(0)" th:if="${r.bapa==0}">不允许</a>
+                                                         <a href="javascript:void(0)" th:if="${r.bapa==1}">允许</a>
+                                                         <br>
+                     	        每天影片限购数量: 
+                     	        						<a href="javascript:void(0)"  th:if="${r.day_buy_limit==0}">不限制</a>
+                     	        						<a href="javascript:void(0)"  th:if="${r.day_buy_limit==null}">未设置</a>
+                     	        						<a href="javascript:void(0)"  th:if="${r.day_buy_limit!=0&&r.day_buy_limit!=null}">[[${r.day_buy_limit}]]张</a>
+                     									<br>       
+                     		 每单影片限购数量:               
+                     	        						<a href="javascript:void(0)"  th:if="${r.show_buy_limit==0}">不限制</a>
+                     	        						<a href="javascript:void(0)"  th:if="${r.show_buy_limit==null}">未设置</a>
+														<a href="javascript:void(0)"  th:if="${r.show_buy_limit!=0&&r.show_buy_limit!=null}">[[${r.show_buy_limit}]]张</a>
+                                                       </div>
+                                                      </div>
+                                                      <div th:if="${!is_root}">
+                                                           会员折扣:
+                                                         <a href="javascript:void(0)" th:if="${r.cr_discount==null||r.cr_discount==0}">未设置</a>
+                                                         <a href="javascript:void(0)" th:if="${r.cr_discount!=null||r.cr_discount!=0}">[[${r.cr_discount/100}]]折</a> <br/> 
+                                                      </div>
+                                                    </td>
+                                                    <td><!-- attr_id="${r.id }" ="${r. }" attr_gp="${r.getpay }" attr_gr="${r.giftRecharge }" attr_vt="${r.validateType }" attr_vp="${r.validatePeriod }" -->
+                                                       <a th:if="${r.getmode!=0}" href="javascript:void(0);" th:value="${r.id}" class="modify_receive" th:attr="attr_gm=${r.getmode},attr_gp=${r.getpay }, attr_gr=${r.gift_recharge},attr_vt=${r.validate_type},attr_vp=${r.validate_period}" >          
+                                                        升级
+                                                       </a> 
+                                                    </td>
+                                                    <td>
+                                                      <div th:if="${is_root}">
+                                                        <a href="javascript:void(0)" class="btn btn-info btn-xs do_edit" th:value="${r.id }"><i class="fa fa-pencil"></i> 编辑会员等级 </a> 
+                                                        <a href="javascript:void(0)" class="btn btn-danger btn-xs do_set_sale"  th:attr="value=${r.id },cr_discount=${r.cr_discount},mcr_balance_pay=${r.bapa},day_buy_limit=${r.day_buy_limit},show_buy_limit=${r.show_buy_limit}"><i class="fa fa-pencil"></i> 设置优惠信息 </a>
+                                                        <a href="javascript:void(0)" style="background-color: #640f0c; border-color: #640f0c;" class="btn btn-danger btn-xs do_set_goods_sale" th:value="${r.id }"><i class="fa fa-pencil"></i>
+                                                            商品优惠信息 </a> 
+                                                        <a href="javascript:void(0)" class="btn btn-dark btn-xs do_edit_detail" th:attr="value=${r.id },mc_id=${r.mc_id}"><i class="fa fa-pencil"></i> 编辑会员权益 </a>
+                                                      </div>    
+                                                    </td>
+                                                    <td>
+                                                     <div th:if="${is_root}">
+                                                        <div th:if="${r.flag==0}"> 已开启<br /> 
+                                                              <a href="javascript:void(0)" class="btn btn-dark btn-xs switch_ss" th:value="${r.id }"><i class="fa fa-pencil"></i> 网售禁用 </a>
+                                                        </div>
+                                                        <div th:if="${r.flag==1}"> 已禁用<br /> 
+                                                              <a href="javascript:void(0)" class="btn btn-success btn-xs switch_ss" th:value="${r.id }"><i class="fa fa-pencil"></i> 网售开启</a>
+                                                        </div>
+                                                      </div>
+                                                       <div th:if="${!is_root}">
+                                                            <div th:if="${r.flag==0}"> 网售禁用</div>
+                                                            <div th:if="${r.flag==1}"> 网售开启</div>
+                                                       </div>
+                                                    </td>
+                                                </tr>
+                                            </div>
+                                        </tbody>
+                                    </table>
+                                    <div th:replace="../common/page"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div th:replace="../common/foot"></div>
+        </div>
+    </div>
+
+    <div id="templatemo-preferences-form"
+        style="display: none; padding-left: 15px; padding-right: 15px">
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_hname" class="control-label">会员等级名称</label>
+                 <input type="text" class="form-control" id="mcr_hname" value="" placeholder="如初级会员">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_hname" class="control-label">会员等级描述</label> 
+                <input type="text" class="form-control" id="mcr_desc" value="" placeholder="如折扣卡">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_hindex" class="control-label">内部递增序号</label>
+                 <input type="text" class="form-control" id="mcr_hindex" value="" placeholder="建议从1累加">
+            </div>
+            <!-- <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_hnum" class="control-label">等级编号</label> 
+                <input type="text" class="form-control" id="mcr_hnum" value="" placeholder="输入等级编号">
+            </div> -->
+            
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_period">积分清零周期</label> <select name="mcr_period" class="form-control margin-bottom-15" id="mcr_period">
+                    <option value="0000">永久有效</option>
+                    <option value="1000">每年清零</option>
+                </select>
+            </div>  
+        </div>
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_goods" class="control-label">购买商品累计积分规则</label>
+                 <input type="text" class="form-control" id="mcr_goods" value="" placeholder="积分规则可以为空">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_movie" class="control-label">购买影片累计积分规则</label> 
+                <input type="text" class="form-control" id="mcr_movie" value="" placeholder="积分规则可以为空">
+            </div>
+        </div>
+        <div class="row">
+            <!-- <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_period">积分清零周期</label> <select name="mcr_period" class="form-control margin-bottom-15" id="mcr_period">
+                    <option value="0000">永久有效</option>
+                    <option value="1000">每年清零</option>
+                </select>
+            </div> -->
+        </div>
+        <div class="row templatemo-form-buttons">
+            <div class="col-md-12">
+                <button id="do_save_mcr" class="btn btn-primary">提交</button>
+            </div>
+        </div>
+    </div>
+    <!--   会员等级编辑页面 -->
+    <div id="templatemo-preferences-edit-form"
+        style="display: none; padding-left: 15px; padding-right: 15px">
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_hname1" class="control-label">会员等级名称</label> 
+                <input type="text" class="form-control" id="mcr_hname1" value="" placeholder="如初级会员">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_hname1" class="control-label">会员等级描述</label>
+                 <input type="text" class="form-control" id="mcr_desc1" value="" placeholder="如折扣卡">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_hindex1" class="control-label">内部递增序号</label> 
+                <input type="text" class="form-control" id="mcr_hindex1" value="" placeholder="建议从1累加">
+            </div>
+          <!--   <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_hnum1" class="control-label">等级编号</label> 
+                <input type="text" class="form-control" id="mcr_hnum1" value="" placeholder="输入等级编号">
+            </div> -->
+               <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_period1">积分清零周期</label> <select name="mcr_period" class="form-control margin-bottom-15" id="mcr_period1">
+                    <option value="0000">永久有效</option>
+                    <option value="1000">每年清零</option>
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_goods1" class="control-label">购买商品累计积分规则</label>
+                 <input type="text" class="form-control" id="mcr_goods1" value="" placeholder="积分规则可以为空">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_movie1" class="control-label">购买影片累计积分规则</label> 
+                <input type="text" class="form-control" id="mcr_movie1" value="" placeholder="积分规则可以为空">
+            </div>
+        </div>
+        <div class="row">
+         <!--    <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_period1">积分清零周期</label> <select name="mcr_period" class="form-control margin-bottom-15" id="mcr_period1">
+                    <option value="0000">永久有效</option>
+                    <option value="1000">每年清零</option>
+                </select>
+            </div> -->
+        </div>
+        <div class="row templatemo-form-buttons">
+            <div class="col-md-12">
+                <button id="do_update_mcr" class="btn btn-primary">提交</button>
+            </div>
+        </div>
+    </div>
+    
+       <div id="templatemo-preferences-form-2" style="display:none;padding-left:15px;padding-right:15px; margin-bottom: 30px; max-width: 960px;">
+        <div class="row">
+            <div class="col-md-12 margin-bottom-15">
+                <label for="mcr_getmode">获取方式</label> 
+                <select name="mcr_getmode" class="form-control margin-bottom-15" id="mcr_getmode">
+                    <!-- <option value="0">直接获取</option> -->
+                    <option value="1">升级获取</option>
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_getpay" class="control-label">支付金额</label>
+                <input type="text" class="form-control" id="mcr_getpay" value="" placeholder="请输入升级需要支付金额，默认为0">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="" class="control-label">有效期方式</label>
+                <select name="validate_type" class="form-control margin-bottom-15" id="validate_type">
+                    <option value="GETTIME">按领用日期</option>
+                    <option value="FIXED">固定有效期</option>
+                    <option value="FOREVER">永久有效</option>
+                </select>
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label class="control-label">有效期设置</label>
+                <div class="row" name="validate_period_gettime">
+                    <div class="col-md-5">
+                        <input type="text" class="form-control" />
+                    </div>
+                    <div class="col-md-7">
+                        <select class="form-control margin-bottom-15">
+                            <option value="MONTH">月</option>
+                            <option value="YEAR">年</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row" name="validate_period_fixed" style="display: none;">
+                    <div class="col-md-12">
+                        <input type="text" id="FIXED_time" class="form-control" />
+                    </div>
+                </div>
+                 <div class="row" name="validate_period_forever" style="display: none;">
+                    <div class="col-md-12">
+                        <input type="text" id="Forever_time" class="form-control" value="" disabled="disabled" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row templatemo-form-buttons">
+            <div class="col-md-12">
+                <button id="modify_getmode" m_id="" class="btn btn-primary">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="templatemo-preferences-benefit" style="display:none;padding-left:15px;padding-right:15px">
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_discount" class="control-label">会员折扣，请输入0.01-9.99的数值</label>
+                <input type="text" class="form-control" id="mcr_discount" value="" placeholder="9.5折，为空则无折扣">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_balance_pay">允许余额支付</label> 
+                <select name="mcr_balance_pay" class="form-control margin-bottom-15" id="mcr_balance_pay">
+                    <option value="1">允许</option>
+                    <option value="0">不允许</option>
+                </select>
+            </div>
+        </div>
+        <div class="row">
+         <div class="col-md-6 margin-bottom-15">
+                <label for="day_buy_limit" class="control-label">每天影片限购数量</label>
+                <input type="text" class="form-control" id="day_buy_limit" value="" placeholder="输入整数，为空则不限制">
+           </div>
+           <div class="col-md-6 margin-bottom-15">
+                <label for="show_buy_limit" class="control-label">每单影片限购数量</label>
+                <input type="text" class="form-control" id="show_buy_limit" value="" placeholder="输入整数，为空则不限制">
+           </div>
+         </div>
+        <div class="row templatemo-form-buttons">
+            <div class="col-md-12">
+                <button id="do_save_mcr_benefit" class="btn btn-primary">提交</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="templatemo-preferences-form-4" style="display:none;padding-left:15px;padding-right:15px">
+        <div class="row">
+            <div class="col-md-12 margin-bottom-15">
+                <label for="mcr_prefix" class="control-label">规则前缀</label>
+                <input type="text" class="form-control" id="mcr_prefix" placeholder="请输入会员卡规则前缀" value="">
+            </div>
+        </div>
+        <div class="has-success has-feedback row_inner">
+            <div class="row">
+                <div class="col-md-12 margin-bottom-15">
+                    <label for="proj_config" class="control-label">说明</label><br/>
+                    <span>规则前缀可为数字和字母的组合或纯数字／字母</span><br/>
+                    <span>规则前缀用来生成卡号的开始位</span><br/>
+                    <hr>
+                    <span>备注：规则前缀设定后不可修改，请谨慎操作</span>
+                </div>
+            </div>
+        </div>
+        <div class="row templatemo-form-buttons">
+            <div class="col-md-12">
+                <button id="do_set_prefix" class="btn btn-primary">提交</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="templatemo-preferences-form-3" style="display:none;padding-left:15px;padding-right:15px; margin-bottom: 30px; max-width: 960px;">
+        <div class="row">
+            <div class="col-md-12 margin-bottom-15">
+                <label for="mcr_supp_recharge">支持充值</label> 
+                <select name="mcr_getmode" class="form-control margin-bottom-15" id="mcr_supp_recharge">
+                    <option value="1">支持</option>
+                    <option value="0">不支持</option>
+                </select>
+            </div>
+        </div>
+        <div class="row templatemo-form-buttons">
+            <div class="col-md-12">
+                <button id="do_modify_recharge" class="btn btn-primary">确认</button>
+            </div>
+        </div>
+    </div>
+    
+    
+    <!-- Mainly scripts -->
+    <script th:src="@{{sp}/js/jquery-2.1.1.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/bootstrap.min.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/plugins/metisMenu/jquery.metisMenu.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/plugins/slimscroll/jquery.slimscroll.min.js(sp=${pub_bucket})}"></script>
+
+    <!-- Custom and plugin javascript -->
+    <script th:src="@{{sp}/js/inspinia.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/plugins/pace/pace.min.js(sp=${pub_bucket})}"></script>
+
+    <script th:src="@{{sp}/third/layer3/layer.js(sp=${pub_bucket})}" type="text/javascript"></script>
+	<script th:src="@{{sp}/jqui1114/jquery-ui.js(sp=${pub_bucket})}" type="text/javascript" charset="utf-8"></script>
+    <script th:src="@{{sp}/jqui1114/jquery-ui-timepicker-addon.js(sp=${pub_bucket})}" type="text/javascript" charset="utf-8"></script>
+    <script th:src="@{{sp}/jqui1114/jquery-ui-timepicker-zh-CN.js(sp=${pub_bucket})}" type="text/javascript" charset="utf-8"></script>
+    <script>
+        $(document).ready(function() {
+
+            $('#loading-example-btn').click(function() {
+                btn = $(this);
+                simpleLoad(btn, true)
+
+                // Ajax example
+                //                $.ajax().always(function () {
+                //                    simpleLoad($(this), false)
+                //                });
+
+                simpleLoad(btn, false)
+            });
+        });
+
+        function simpleLoad(btn, state) {
+            if (state) {
+                btn.children().addClass('fa-spin');
+                btn.contents().last().replaceWith(" Loading");
+            } else {
+                setTimeout(function() {
+                    btn.children().removeClass('fa-spin');
+                    btn.contents().last().replaceWith(" Refresh");
+                }, 2000);
+            }
+        }
+		
+        $("#FIXED_time").datepicker();
+        $("#FIXED_time").datepicker("option", "showAnim", "slideDown");
+        $("#FIXED_time").datepicker("option", "dateFormat", "yy-mm-dd");
+    </script>
+</body>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    $(".add_mc_hierarchy").on("click", function(){
+        $("#mcr_hname").val("");
+        $("#mcr_hpoint").val("");
+        $("#mcr_hindex").val("");
+        $("#mcr_desc").val("");
+        $("#mcr_hnum").val("");
+        $("#mcr_goods").val("");
+        $("#mcr_movie").val("");
+        global_mch_id = 0;
+        layer.open({
+            area : [ '500px', '400px' ],
+            type : 1,
+            content : $("#templatemo-preferences-form")
+        });
+    });
+    $("#do_save_mcr").on("click", function(){
+        var mcr_id = [[${mcRule.id}]]
+        var mcr_hname = $("#mcr_hname").val();
+        var mcr_hindex = $("#mcr_hindex").val();
+        var mcr_period = $("#mcr_period").val();
+        var mcr_desc = $("#mcr_desc").val();
+        var mcr_goods = $("#mcr_goods").val();
+        var mcr_movie = $("#mcr_movie").val();
+        if(mcr_hname==""||mcr_hname==null) {
+            layer.msg("请输入会员等级名称", {icon: 2});
+            return;
+        }
+        var reg=/(^[0-9]*$)|(^[0-9]*[\.]{1}[0-9]{0,2}$)/;
+        if(!reg.test(mcr_goods)||!reg.test(mcr_movie)){
+        	layer.msg("积分规则格式输入错误", {icon: 2});
+            return;
+        }
+        var index = layer.load();
+        var url = "[[${contextPath}]]" + "/hierarchy/add/?" + Date.parse(new Date());
+        $.post(url, {mcr_id:mcr_id,mcr_hname:mcr_hname,mcr_hindex:mcr_hindex,mcr_period:mcr_period,mcr_desc:mcr_desc,mcr_goods:mcr_goods,mcr_movie:mcr_movie}, function(data){
+            layer.close(index);
+            if(data.available) {
+                layer.alert('操作成功', {
+                    skin: 'layui-layer-lan',
+                    shift: 4 //动画类型
+                }, function(){
+                    location.reload();
+                });
+            } else {
+                var code = data.messages[0];
+                layer.msg(code, {
+                    shift : 6
+                });
+            }
+        });
+    });
+    //修改网售状态
+    $(".switch_ss").on("click",function(){
+    	 var id =$(this).attr("value");
+    	 var url="[[${contextPath}]]" + "/hierarchy/changestatus";
+    	 var index = layer.load(); 
+    	 $.post(url, {id:id}, function(data){
+    	    layer.close(index);
+    	       if(data.available) {
+    	           layer.alert('操作成功', {
+    	                skin: 'layui-layer-lan',
+    	                 shift: 4 //动画类型
+    	               }, function(){
+    	                    location.reload();
+    	              });
+    	       } else {
+    	           var code = data.messages[0];
+    	            layer.msg(code, {
+    	              shift : 6
+    	             });
+    	         }
+       });
+    });
+    $(".do_set_goods_sale").on("click", function() {
+        location.href = '[[${contextPath}]]/hierarchy/equity/equityView?mch_id=' + $(this).attr("value") + "&ts="+Date.parse(new Date());
+    });
+    //编辑会员等级
+    var rid="";
+    $(".do_edit").on("click", function(){
+        rid = $(this).attr("value");
+        var url="[[${contextPath}]]" + "/hierarchy/getItem";
+        $.post(url,{h_id:rid},function(data){
+            if(data!=null||data!=""){
+            $("#mcr_hname1").val(data.obj.h_name);
+            $("#mcr_hpoint1").val(data.obj.h_point);
+            $("#mcr_htimes1").val(data.obj.htimes);
+            $("#mcr_hindex1").val(data.obj.hindex);
+            $("#mcr_desc1").val(data.obj.cr_type_desc);
+            //$("#mcr_hnum1").val(data.obj.h_num);
+            $("#mcr_goods1").val(data.obj.goods_htimes);
+            $("#mcr_movie1").val(data.obj.movie_hitmes);
+            layer.open({
+                area : [ '500px', '400px' ],
+                type : 1,
+                content : $("#templatemo-preferences-edit-form")
+           })
+            }
+            })
+    });
+    //更新会员等级
+    $("#do_update_mcr").on("click", function(){
+        var mcr_id = [[${mcRule.id}]]
+        var mcr_hname = $("#mcr_hname1").val();
+        var mcr_hindex = $("#mcr_hindex1").val();
+        var mcr_period = $("#mcr_period1").val();
+        var mcr_desc = $("#mcr_desc1").val();
+        //var mcr_hnum = $.trim($("#mcr_hnum1").val());
+        var mcr_goods = $("#mcr_goods1").val();
+        var mcr_movie = $("#mcr_movie1").val();
+        if(mcr_hname==""||mcr_hname==null) {
+            layer.msg("请输入会员等级名称", {icon: 2});
+            return;
+        }
+        var reg=/(^[0-9]*$)|(^[0-9]*[\.]{1}[0-9]{0,2}$)/;
+        if(!reg.test(mcr_goods)||!reg.test(mcr_movie)){
+        	layer.msg("积分规则格式输入错误", {icon: 2});
+            return;
+        }
+        var index = layer.load();
+        var url = "[[${contextPath}]]" + "/hierarchy/update" 
+        $.post(url, {rid:rid,mcr_id:mcr_id,mcr_hname:mcr_hname,mcr_hindex:mcr_hindex,mcr_period:mcr_period,mcr_desc:mcr_desc,mcr_goods:mcr_goods,mcr_movie:mcr_movie}, function(data){
+            layer.close(index);
+            if(data.available) {
+                layer.alert('操作成功', {
+                    skin: 'layui-layer-lan',
+                    shift: 4 //动画类型
+                }, function(){
+                    location.reload();
+                });
+            } else {
+                var code = data.messages[0];
+                layer.msg(code, {
+                    shift : 6
+                });
+            }
+        });
+    });
+    
+    $(".modify_receive").on("click", function(){
+        var h_id = $(this).attr("value");
+        $("#modify_getmode").attr("m_id",h_id);
+        $("#mcr_getmode").val($(this).attr("attr_gm"));
+        $("#mcr_getpay").val($(this).attr("attr_gp")/100);
+        //$("#mcr_gfcharge").val($(this).attr("attr_gr")/100);mcr_gfcharge
+        $("#validate_type").val($(this).attr("attr_vt"));
+        var vp = $(this).attr("attr_vp");
+        if($(this).attr("attr_vt") == "GETTIME"){
+            $("div.row[name=validate_period_gettime] input").val(vp.split("_")[0]);
+            $("div.row[name=validate_period_gettime] select").val(vp.split("_")[1]);
+            $("div.row[name=validate_period_gettime]").show();
+            $("div.row[name=validate_period_fixed]").hide();
+            $("div.row[name=validate_period_forever]").hide();
+            
+        }else if($(this).attr("attr_vt") == "FIXED"){
+            $("div.row[name=validate_period_gettime]").hide();
+            $("div.row[name=validate_period_fixed]").show();
+            $("div.row[name=validate_period_forever]").hide();
+            $("div.row[name=validate_period_fixed] input").val(vp);
+        }else if($(this).attr("attr_vt") == "FOREVER"){
+        	$("div.row[name=validate_period_gettime]").hide();
+            $("div.row[name=validate_period_fixed]").hide();
+            $("div.row[name=validate_period_forever]").show();
+            $("div.row[name=validate_period_fixed] input").val(vp);
+        }
+         layer.open({
+             area : [ '350px', '300px' ],
+             type : 1,
+             content : $("#templatemo-preferences-form-2")
+         });
+    }); 
+    
+    
+    $("#modify_getmode").on("click", function() {
+    	if (![[${is_root}]]) {
+    		layer.msg("没有权限不能修改", {
+                icon : 2
+            });
+    		return;
+    	} 
+        var mcr_getmode = $("#mcr_getmode").val();
+        var mcr_getpay = $.trim($("#mcr_getpay").val());
+        var validate_type = $("#validate_type").val();
+        var validate_period;
+        var validate_period_gettime = $("div.row[name=validate_period_gettime] input").val();
+        var validate_period_fixed = $("div.row[name=validate_period_fixed] input").val();
+        var tmp_id = $("#modify_getmode").attr("m_id");
+        if(validate_type == "GETTIME"){
+        	// 领用日期
+            validate_period = validate_period_gettime;
+            var r = /^\+?[1-9][0-9]*$/;
+        	if (!r.test(validate_period)) {
+        		 layer.msg("请输入整数", {icon: 2});
+                 return;
+        	}
+        }
+        if(validate_type == "FIXED"){
+        	// 国定有效期
+            validate_period = validate_period_fixed;
+        }
+        if(validate_type == "FOREVER"){
+        	// 永久有效
+            validate_period = "NULL";
+        }
+        if(!validate_period){
+            layer.msg("请设置有效期", {icon: 2});
+            return;
+        }
+        if(validate_type == "GETTIME"){
+            validate_period += "_"+$("div.row[name=validate_period_gettime] select").val();
+        }
+        if(tmp_id<=0) {
+            layer.msg("请选择要设置的会员等级", {icon: 2});
+            return;
+        }
+        if(mcr_getpay==null||mcr_getpay=="") {
+            mcr_getpay = "0";
+        }
+        if(isNaN(mcr_getpay)) {
+            layer.msg("请输入正确的办卡支付金额", {icon: 2});
+            return;
+        }
+        var url="[[${contextPath}]]" + "/hierarchy/updateReceive";
+        var index = layer.load();
+        $.post(url, {mch_id:tmp_id
+            ,mcr_getmode:mcr_getmode
+            ,mcr_getpay:mcr_getpay
+            ,validate_type : validate_type
+            ,validate_period : validate_period
+            }, function(data) {
+            layer.close(index);
+            if(data.available) {
+                layer.alert('操作成功', {
+                    skin: 'layui-layer-lan',
+                    shift: 4 //动画类型
+                }, function(){
+                    location.reload();
+                });
+            } else {
+                var code = data.messages[0];
+                layer.msg(code, {
+                    icon : 2
+                });
+            }
+        });
+    });
+    $("#validate_type").change(function(){
+        if($(this).val() == "GETTIME"){
+            $("div.row[name=validate_period_gettime]").show();
+            $("div.row[name=validate_period_fixed]").hide();
+            $("div.row[name=validate_period_forever]").hide();
+        }else if($(this).val() == "FIXED"){
+            $("div.row[name=validate_period_gettime]").hide();
+            $("div.row[name=validate_period_fixed]").show();
+            $("div.row[name=validate_period_forever]").hide();
+        }else if($(this).val() == "FOREVER"){
+        	 $("div.row[name=validate_period_gettime]").hide();
+             $("div.row[name=validate_period_fixed]").hide();
+             $("div.row[name=validate_period_forever]").show();
+        }
+    });
+    
+    // 打开优惠信息编辑框
+     var mc_id;
+    $(".do_set_sale").on("click", function() {
+         mc_id = $(this).attr("value");
+         if($(this).attr("cr_discount")==null||$(this).attr("cr_discount")==0){
+            $("#mcr_discount").val("");
+         }else{
+        	 $("#mcr_discount").val($(this).attr("cr_discount")/100);//会员折扣
+         }
+         if($(this).attr("cr_discount")!=null){
+        	 $("#mcr_balance_pay").val($(this).attr("mcr_balance_pay"));//是否余额支付
+         }else{
+        	 $("#mcr_balance_pay").val("0");
+         }
+         if($(this).attr("day_buy_limit")==null||$(this).attr("day_buy_limit")==0){
+        	 $("#day_buy_limit").val("");
+         }else{
+        	   $("#day_buy_limit").val($(this).attr("day_buy_limit"));
+         }
+    	 if($(this).attr("show_buy_limit")==null||$(this).attr("show_buy_limit")==0){
+    		 $("#show_buy_limit").val("");
+         }else{
+      		 $("#show_buy_limit").val($(this).attr("show_buy_limit"));
+      	 }
+         layer.open({
+             area : [ '500px', '450px' ],
+             type : 1,
+             content : $("#templatemo-preferences-benefit")
+         });
+    });
+    
+    // 保存优惠信息
+    $("#do_save_mcr_benefit").on("click", function() {
+        var mcr_discount = $("#mcr_discount").val();//会员折扣
+        var mcr_balance_pay = $("#mcr_balance_pay").val();//是否余额支付
+        var show_buy_limit=$("#show_buy_limit").val();//每单限购数量
+        var mcr_day_limit=$("#day_buy_limit").val();//每天限购数量
+        //会员折扣判断
+      	if(isNaN(mcr_discount)){
+        	$("#mcr_discount").val("");
+            layer.msg("会员折扣必须为数字", {icon: 2});
+            return;
+        }else {
+            if(parseInt(mcr_discount)<0) {
+            	$("#mcr_discount").val("");
+                layer.msg("会员折扣需大于0", {icon: 2});
+                return;
+            }
+        }
+       if(isNaN(show_buy_limit)){
+         	$("#show_buy_limit").val("");
+             layer.msg("每单限购数量必须为数字", {icon: 2});
+             return;
+         }else{
+             if(parseInt(show_buy_limit)<0) {
+             	$("#show_buy_limit").val("");
+                 layer.msg("每单限购数量大于0", {icon: 2});
+                 return;
+             }
+         }
+     	if(isNaN(mcr_day_limit)){
+        	$("#day_buy_limit").val("");
+            layer.msg("每天限购数量必须为数字", {icon: 2});
+            return;
+        }else {
+            if(parseInt(mcr_day_limit)<0) {
+            	$("#day_buy_limit").val("");
+                layer.msg("每天限购数量需大于0", {icon: 2});
+                return;
+            }
+        }
+        
+        var url = "[[${contextPath}]]"+"/hierarchy/set_benefit/?" + Date.parse(new Date());
+        var index = layer.load();
+        $.post(url, {mc_id:mc_id,mcr_discount:mcr_discount,
+            mcr_balance_pay:mcr_balance_pay,mcr_day_limit:mcr_day_limit,
+            show_buy_limit:show_buy_limit}, function(data) {
+            layer.close(index);
+            if(data.available) {
+                layer.alert('操作成功', {
+                    skin: 'layui-layer-lan',
+                    shift: 4 //动画类型
+                }, function(){
+                    location.reload();
+                });
+            } else {
+                var code = data.messages[0];
+                var msg = code;//msg="未知错误"
+                if(code=="input_param_error") {
+                    msg = "请检查输入参数";
+                } else if(code=="common_object_not_found") {
+                    msg = "会员等级未找到";
+                } else if(code=="object_belong_error") {
+                    msg = "数据归属错误";
+                }
+                layer.msg(code, {
+                    icon : 2
+                });
+            }
+        });
+    });
+    //修改线上充值状态
+    $(".change_status").on("click",function(){
+    	var id=$(this).attr("value");	
+	    layer.confirm('确定切换会员卡线上充值状态吗？', {
+	    btn: ['确定','取消'], //按钮
+	    shade: [0.8, '#393D49'] //显示遮罩
+	}, function(){
+		var url ="[[${contextPath}]]" + "/hierarchy/change_status_recharge"
+		var index = layer.load();
+		$.post(url, {id:id}, function(data){
+			layer.close(index);
+			if(data.available) {
+				layer.alert('操作成功', {
+			        skin: 'layui-layer-lan',
+			        shift: 4 //动画类型
+			    }, function(){
+                    location.reload();
+	              });
+			} else {
+				var code = data.messages[0];
+				var msg = "";
+				if(code=="goods_not_found") {
+					msg = "商品未找到";
+				} else if(code=="object_belong_error") {
+					msg = "商品归属错误";
+				} else if(code=="unknown") {
+					msg = "未知错误";
+				}
+				layer.msg(msg, {
+					icon : 2
+				});
+			  }
+			});
+		}, function(){
+	    layer.msg('操作取消', {shift: 6});
+	   });
+    });
+    
+    $(".do_edit_detail").on("click", function() {
+        var mc_pid = $(this).attr("value");
+        location.href ="[[${contextPath}]]" + "/hierarchy/detail/detailView?mc_pid="+mc_pid;
+    });
+    
+    
+    //规则前缀
+    var prefix_id;
+    var prefix;
+    $(".set_prefix").on("click", function() {
+    	prefix_id = $(this).attr("value");
+    	prefix = $(this).attr("prefix");
+    	$("#mcr_prefix").val(prefix)
+	//显示规则前缀，初次点击应该为空
+        layer.open({
+            area : [ '350px', '350px' ],
+            type : 1,
+            content : $("#templatemo-preferences-form-4")
+        });
+    });
+    //点击提交规则前缀
+    $("#do_set_prefix").on("click", function() {
+        if(prefix_id<=0) {
+            layer.msg("请选择您要设置的规则", {icon: 2});
+            return;
+        }
+        prefix = $("#mcr_prefix").val();//用户填写的规则
+        if(prefix==null||prefix.trim()=="") {
+            layer.msg("请选择您要设置的规则", {icon: 2});
+            return;
+        }
+        var url = "[[${contextPath}]]"+"/hierarchy/set_prefix/?" + Date.parse(new Date());
+        var index = layer.load();
+        $.get(url, {mch_id:prefix_id,prefix:prefix}, function(data) {
+            layer.close(index);
+            if(data.available) {
+                $("#set_prefix_" + prefix_id).html(prefix);
+                layer.alert('操作成功', {
+                    skin: 'layui-layer-lan',
+                    shift: 4 //动画类型
+                }, function(){
+                    location.reload();
+                });
+            } else {
+                var code = data.messages[0];
+                var msg = code;
+                if(code=="input_param_error") {
+                    msg = "请检查输入参数";
+                } else if(code=="common_object_not_found") {
+                    msg = "等级未找到";
+                } else if(code=="object_belong_error") {
+                    msg = "规则归属错误";
+                } else if(code=="unsupport_operatioin") {
+                    msg = "前缀不可重复设定";
+                } else if(code=="mc_not_found") {
+                    msg = "等级未绑定规则，请联系管理员";
+                } else if(code=="status_invalid") {
+                    msg = "外部规则不可设置";
+                }
+                layer.msg(msg, {
+                    icon : 2
+                });
+            }
+        });
+    });
+    
+    //支持充值
+    //var re_id = 0;
+     var id="";
+    $(".modify_recharge").on("click", function() {
+    	 id= $(this).attr("value");
+    	 var supp_recharge = "0";
+         if($(this).attr("attr_supp_recharge")==true) {
+             supp_recharge = "1";
+         }
+         id = $(this).attr("value");
+         $("#mcr_supp_recharge").val(supp_recharge);
+         $("#mcr_init_recharge").val($(this).attr("attr_init_recharge")/100);
+         $("#mcr_least_recharge").val($(this).attr("attr_least_recharge")/100);
+	        layer.open({
+	           	area : [ '350px', '300px' ],
+	           	type : 1,
+	           	content : $("#templatemo-preferences-form-3")
+	        });
+    });
+    
+    $("#do_modify_recharge").on("click", function() {
+        var mcr_supp_recharge = $("#mcr_supp_recharge").val();
+        var url = "[[${contextPath}]]"+"/hierarchy/modify_recharge/?" + Date.parse(new Date());
+        var index = layer.load();
+        $.get(url, {mch_id:id,mcr_supp_recharge:mcr_supp_recharge}, function(data) {
+            layer.close(index);
+            if(data.available) {
+                layer.alert('操作成功', {
+                    skin: 'layui-layer-lan',
+                    shift: 4 //动画类型
+                }, function(){
+                    location.reload();
+                });
+            } else {
+                var code = data.messages[0];
+                
+                layer.msg(code, {
+                    icon : 2
+                });
+            }
+        });
+    }); 
+});
+
+
+</script>
+
+</html>

@@ -1,0 +1,148 @@
+package com.jeancoder.crm.internal.h5.user
+
+import java.text.SimpleDateFormat
+import java.util.Map
+
+import com.jeancoder.app.sdk.JC
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.core.result.Result
+import com.jeancoder.crm.ready.common.AvailabilityStatus
+import com.jeancoder.crm.ready.constant.McConstants
+import com.jeancoder.crm.ready.constant.SimpleAjax
+import com.jeancoder.crm.ready.dto.SysProjectInfo
+import com.jeancoder.crm.ready.dto.mc.AccountMcDto
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.MemberCardHierarchyDetail
+import com.jeancoder.crm.ready.entity.MemberCardRule
+import com.jeancoder.crm.ready.mcbridge.MCFactory
+import com.jeancoder.crm.ready.mcbridge.bring.DXMCBringInstance
+import com.jeancoder.crm.ready.mcbridge.bring.JCMCBringInstance
+import com.jeancoder.crm.ready.mcbridge.dto.MCAuthFix
+import com.jeancoder.crm.ready.mcbridge.ret.MCLocalDetail
+import com.jeancoder.crm.ready.mcbridge.ret.MCRetDetail
+import com.jeancoder.crm.ready.service.AccountProjectMcService
+import com.jeancoder.crm.ready.service.MemberCardHierarchyDetailService
+import com.jeancoder.crm.ready.service.MemberCardHierarchyService
+import com.jeancoder.crm.ready.service.MemberCardRuleService
+import com.jeancoder.crm.ready.util.AccountProjectMCUtil
+import com.jeancoder.crm.ready.util.DateUtil
+import com.jeancoder.crm.ready.util.JackSonBeanMapper
+import com.jeancoder.crm.ready.util.NativeUtil
+import com.jeancoder.crm.ready.util.RemoteUtil
+import com.jeancoder.crm.ready.util.StringUtil
+
+/**获取当前用户的会员卡列表 根据手机号查询会员列表唯一标识**/
+
+//获取当前登录用户的注册号码
+AccountProjectMcService apms=new AccountProjectMcService()
+MemberCardHierarchyService mchs=new MemberCardHierarchyService();
+MemberCardHierarchyDetailService mchds=new MemberCardHierarchyDetailService();
+JCLogger Logger = LoggerSource.getLogger(this.getClass().getName());
+
+Result result =new Result();
+try {
+	def apid = JC.internal.param("apid").toString();
+	def pid = JC.internal.param('pid').toString();
+	def moblie = JC.internal.param('moblie');
+	def sid = JC.internal.param('sid');
+	
+	Logger.info("moblie_" + moblie)
+	def  proj = NativeUtil.connect(SysProjectInfo.class, 'project', '/incall/project_by_id',['pid':pid.toString()]);
+	
+	BigInteger id= new BigInteger(apid.toString())
+	pid = new BigInteger(pid.toString());
+	List<AccountProjectMC> resultList=apms.get_by_apid_or_mobile(id,moblie);
+	if(resultList==null||resultList.isEmpty()) {
+		return AvailabilityStatus.available();
+	}
+	if (!resultList.get(0).pid.toString().equals(pid.toString()) && !resultList.get(0).pid.toString().equals(proj.getDbpid().toString()) ) {
+		return AvailabilityStatus.notAvailable("未获取到会员信息" + apid + ',' + pid);
+	}
+	
+	//if (!StringUtil.isEmpty(sid)) {
+		try {
+			SimpleAjax ajax = JC.internal.call(SimpleAjax,"ticketingsys", "/store/store_list", [pid:pid])
+			if (!ajax.available) {
+				return ajax;
+			}
+			if (ajax.data == null || ajax.data.size()  == 0) {
+				return SimpleAjax.notAvailable("请添加门店")
+			}
+			sid = ajax.data.get(0).store_no;
+		} catch (e) {
+			Logger.error("查询影院编号失败 ",e);
+		}
+	//}
+	
+	List<AccountMcDto> resultMC =new ArrayList<AccountMcDto>();
+	for (AccountProjectMC account : resultList) {
+		acmd = new AccountMcDto()
+		acmd.acmid =  account.id;
+		if (account.mch_id!=null){
+			MemberCardHierarchy mch = mchs.getItem(account.mch_id);
+			if (mch == null || mch.mcRule == null || !McConstants.mc_rule_start_.equals(mch.mcRule.mcr_status)) {
+				Logger.info("会员规则停止使用")
+				continue;
+			}
+			MemberCardRule mcr =  mch.getMcRule();
+			acmd.outer_type = mcr.outer_type;
+			acmd.rule = mcr;
+			MemberCardHierarchyDetail content=mchds.getMemberCardHierarchyDetail(account.mch_id);
+			if(content!=null){
+				acmd.content = content.content;
+			}
+			def bring = MCFactory.generate(mcr)
+			def param = [:];
+			MCAuthFix fix = new MCAuthFix();
+			fix.pwd = account.mc_pwd;
+			fix.idnum = account.mc_num;
+			fix.mobile = account.mc_mobile;
+			param['pid'] = pid;
+			param['account'] = account;
+			param['mch'] = mch;
+			MCRetDetail detail = bring.get_detail(sid,account.mc_num,fix,param);
+			def card_level_id = null;
+			if (detail.isSuccess()) {
+				//MCLocalDetail detail 
+				
+				acmd.levelname= account.mc_level;
+				acmd.balance= detail.detail.balance;
+				acmd.point= account.point;
+				acmd.mcname= detail.detail.username;
+				acmd.mc_num= account.mc_num;
+				card_level_id = detail.detail.cardLevelId;
+			} else {
+				Logger.info("校验失败")
+				continue;
+			}
+			acmd.mch_id = account.mch_id;
+			if (!"0".equals(mcr.outer_type)) {
+				// 外部会员卡需要更新等级id
+				List<MemberCardHierarchy> result_hs = MemberCardHierarchyService.INSTANSE.getAllByMcId(mcr.id);
+				def mch_id = null
+				for (MemberCardHierarchy mch1 : result_hs) {
+					if (card_level_id.equals(mch1.h_num)) {
+						mch_id = mch.id;
+						break;
+					}
+				}
+				if (mch_id ==  null) {
+					mch_id = result_hs.get(0).id;
+				}
+				acmd.mch_id = mch_id;
+			}
+		}
+		acmd.card_code=AccountProjectMCUtil.getH5CardCode(account);
+		resultMC.add(acmd)
+	}
+	return AvailabilityStatus.available(resultMC);
+} catch (Exception e) {
+	Logger.error("获会员列表失败", e);
+	return AvailabilityStatus.notAvailable("获取失败");
+}  finally {
+	println  'get_account_mcs_ {rules:'+ JackSonBeanMapper.toJson(result)+'}';
+}
+
+

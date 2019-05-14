@@ -1,0 +1,166 @@
+package com.jeancoder.crm.ready.service
+
+import java.sql.Timestamp
+
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.jdbc.JcPage
+import com.jeancoder.jdbc.JcTemplate
+import com.jeancoder.crm.ready.constant.McConstants
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.MemberCardRule
+import com.jeancoder.crm.ready.util.GlobalHolder
+
+public class MemberCardRuleService {
+
+	private static final JCLogger LOGGER = LoggerSource.getLogger(MemberCardRuleService.class);
+
+	public static final MemberCardRuleService INSTANSE = new MemberCardRuleService();
+
+	private static final JcTemplate jcTemplate = JcTemplate.INSTANCE();
+
+	private MemberCardRuleService() {}
+
+
+	public String saveItem(MemberCardRule  memberCardRule) {
+		MemberCardRule entity = new MemberCardRule();
+		entity.a_time = new Date();
+		entity.c_time = new Timestamp(new Date().getTime());
+		entity.flag = 0;
+		entity.title = memberCardRule.title;
+		entity.info = memberCardRule.info;
+		entity.mcflk = memberCardRule.mcflk;
+		entity.mc_level = memberCardRule.mc_level;
+		entity.outer_type = memberCardRule.outer_type;
+		entity.supp_jf = memberCardRule.supp_jf;
+		entity.pid = memberCardRule.pid;
+		entity.outer_pc_num = memberCardRule.outer_pc_num;
+		entity.outer_uri = memberCardRule.outer_uri;
+		entity.outer_pc_key = memberCardRule.outer_pc_key;
+		entity.mcr_status = McConstants.point_rule_status_stop;
+		return jcTemplate.INSTANCE.save(entity);
+	}
+
+	public String updateItem(MemberCardRule  memberCardRule) {
+		MemberCardRule entity = getItem(memberCardRule.id,memberCardRule.pid);
+		entity.c_time = new Timestamp(new Date().getTime());
+		entity.title = memberCardRule.title;
+		entity.info = memberCardRule.info;		
+		entity.outer_type = memberCardRule.outer_type;
+		entity.outer_pc_num = memberCardRule.outer_pc_num;
+		entity.outer_uri = memberCardRule.outer_uri;
+		entity.outer_pc_key = memberCardRule.outer_pc_key;
+		return jcTemplate.INSTANCE.update(entity);
+	}
+
+	public String doupdate_project_mcr(MemberCardRule  memberCardRule){
+		MemberCardRule entity = getItem(memberCardRule.id,memberCardRule.pid);
+		entity.c_time = new Timestamp(new Date().getTime());
+		entity.supp_jf = memberCardRule.supp_jf;
+		entity.def_jf_add_ratio = memberCardRule.def_jf_add_ratio;
+		entity.def_jf_con_ratio = memberCardRule.def_jf_con_ratio;
+		return jcTemplate.INSTANCE.update(entity);
+	}
+
+	public String doupdate_ro(MemberCardRule  memberCardRule){
+		MemberCardRule entity = getItem(memberCardRule.id,memberCardRule.pid);
+		if((entity.mcr_status).equals("00")){
+			entity.mcr_status = "10";
+		}else if((entity.mcr_status).equals("10")){
+			entity.mcr_status = "00";
+		}
+		entity.c_time = new Timestamp(new Date().getTime());
+		return jcTemplate.INSTANCE.update(entity);
+	}
+	
+	public String doupdate_rule(MemberCardRule  memberCardRule){
+		MemberCardRule entity = getItem(memberCardRule.id,memberCardRule.pid);
+		entity.c_time = new Timestamp(new Date().getTime());
+		entity.a_mc_prefix = memberCardRule.a_mc_prefix;
+		entity.a_mch_prefix = memberCardRule.a_mch_prefix;
+		entity.start_cn = memberCardRule.start_cn;
+		entity.end_cn = memberCardRule.end_cn;
+		entity.ct_cn = memberCardRule.ct_cn;
+		return jcTemplate.INSTANCE.update(entity);
+	}
+	
+	public String do_saveorupdate_prefix(MemberCardRule  memberCardRule){
+		MemberCardRule entity = getItem(memberCardRule.id,memberCardRule.pid);
+		entity.c_time = new Timestamp(new Date().getTime());
+		entity.prefix = memberCardRule.prefix;
+		return jcTemplate.INSTANCE.update(entity);
+	}
+	
+	public List<MemberCardRule> getItem_mch(def pid){
+		String sql = "select * from MemberCardRule where flag!=-1 and pid=? and mcr_status='00'";
+		return jcTemplate.find(MemberCardRule.class, sql,pid);
+	}
+
+	/**
+	 *
+	 * 绑定发卡店
+	 * @param memberCardRule
+	 * @return
+	 */
+	public String bindStore(BigInteger mc_id, BigInteger sid) {
+		MemberCardRule entity = getItem(mc_id);
+		if(null != entity) {
+			entity.c_time = new Timestamp(new Date().getTime());
+			entity.sid =sid
+			return jcTemplate.INSTANCE.update(entity);
+		}
+	}
+
+	/**
+	 * @param project_id
+	 * @param store_id
+	 * @param pn 当前页数 总页数
+	 * @param ps
+	 * @return
+	 */
+	public JcPage<MemberCardRule> getList(BigInteger project_id, JcPage<MemberCardRule> page) {
+		StringBuffer sql = new StringBuffer(" select * from MemberCardRule where pid="+ project_id+" and flag!=-1 order by a_time desc");
+//		if (!"1".equals(project_id.toString())) {
+//			sql = new StringBuffer(" select * from MemberCardRule where sid="+ project_id+" and flag!=-1 order by a_time asc");
+//		}
+		return jcTemplate.find(MemberCardRule.class, page, sql.toString());
+	}
+	
+	public List<MemberCardRule> findAll() {
+		//StringBuffer sql = new StringBuffer(" select * from MemberCardRule where pid="+ project_id+" and flag!=-1 order by a_time asc");
+		String sql = 'select * from MemberCardRule where flag!=?';
+		def param = [];
+		param.add(-1);
+		if(GlobalHolder.proj.root!=1) {
+			sql += ' and pid=?';
+			param.add(GlobalHolder.proj.id);
+		}
+		return jcTemplate.find(MemberCardRule.class,sql, param.toArray());
+	}
+
+	/**
+	 * 返回可以用的会员卡规则列表
+	 * @param pid
+	 * @return
+	 */
+	public List<MemberCardRule> getListAvailable(BigInteger pid) {
+		String sql = "select * from MemberCardRule where pid=? and flag!=? and mcr_status=? order by a_time desc";
+		return jcTemplate.find(MemberCardRule.class, sql, pid, -1 ,McConstants.mcr_status_normal);
+	}
+	
+	public MemberCardRule getItem(BigInteger id,BigInteger pid) {
+		String sql = "select * from MemberCardRule where id=? and flag!=-1 and pid=?"
+		return jcTemplate.get(MemberCardRule.class, sql, id,pid);
+	}
+
+	public MemberCardRule getItem(BigInteger id) {
+		String sql = "select * from MemberCardRule where id=? and flag!=-1"
+		return jcTemplate.get(MemberCardRule.class, sql, id);
+	}
+	
+	/* 根据pid查询启用的会员规则列表 去集团查询*/
+	public List<MemberCardRule> getAbleItem(BigInteger pid) {
+		String sql = "select * from MemberCardRule where sid=? and flag!=? and mcr_status=?"
+		return jcTemplate.find(MemberCardRule.class, sql, pid,-1,00);
+	}
+}

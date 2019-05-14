@@ -1,0 +1,51 @@
+package com.jeancoder.crm.ready.constant
+
+class McConstants {
+	public static final String mcr_type_fixed = "1000";
+	public static final String mcr_type_float = "2000";
+	
+	public static final String mcr_status_draft = "10";
+	public static final String mcr_status_normal = "00";
+	
+	public static final String  point_rule_status_stop = "10";// 规则停止
+	public static final String  point_rule_status_start= "00";// 规则启动
+	
+	public static final String _mc_period_forever_ = "0000";
+	public static final String _mc_period_year_ = "1000";
+	
+	//消费获取积分的会员规则类型
+	public static final String _mc_first_level_kind_comsume_point_ = "1000";
+	//折扣卡，直接花费一定金额购买
+	public static final String _mc_first_level_kind_discount_ = "2000";
+	//充值卡，根据充值金额定义会员等级，支持余额消费及折扣
+	public static final String _mc_first_level_kind_recharge_ = "3000";
+	
+	//会员卡规则领用类型
+	public static final Integer _mch_get_mode_direct_ = 0;
+	public static final Integer _mch_get_upgrade_ = 1;
+	
+	//会员卡使用范围
+	public static final Integer _mc_level_proj_ = 1;
+	public static final Integer _mc_level_store_ = 2;
+	
+	//会员卡等级手续费定义
+	public static final String _mch_handle_fee_by_per_goods_ = "1000";
+	public static final String _mch_handle_fee_by_goods_type_ = "2000";
+	public static final String _mch_handle_fee_by_per_order_ = "3000";
+
+	// 卖品
+	public static final String _mch_goods_htimes_="1000";
+	public static final String _mch_movie_htimes_="2000";
+	public static final String _mch_reserve_movie_htimes_="2010";
+	
+	public static final mc_rule_start_ = "00"; // 会员规则启动
+	public static final mc_rule_stop_ = "10"; // 会员规则停用
+	
+	
+	public static final mc_info_item_init_ = "00";// 卡号初始化
+	public static final mc_info_item_lock_ = "01";// 卡号锁卡
+	public static final mc_info_item_pub_ = "10";// 卡号发卡
+	
+	//规定时间未付款的订单，自动处理为关闭状态
+	public static final String _order_status_closed_ = "9000";
+}

@@ -1,0 +1,34 @@
+package com.jeancoder.crm.ready.dto.mc
+
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+
+class AccountMcDto {
+	BigInteger acmid;
+	String cn;
+	String levelname;//等级名称
+	String balance;//余额
+	String mcmobile;//电话
+	String mcname;//姓名
+	String point;//积分
+	String id_card;//身份证号
+	String mc_num;//会员卡号
+	String validate_type;//失效日期类型
+	Long validate_period;//会员卡有效期
+	String card_code;//二维码
+	String content//会员卡权益
+//	String h_name;
+	def rule;//会员卡规则
+	public AccountMcDto(AccountProjectMC apc) {
+		this.acmid = apc.id;
+		this.cn = apc.mc_num;
+		this.levelname = apc.mc_level;
+		this.balance = apc.balance;
+		this.mcmobile = apc.mc_mobile;
+		this.mcname = apc.mc_name;
+		this.point = apc.point;
+	}
+	public AccountMcDto(){
+		
+	}
+	
+}

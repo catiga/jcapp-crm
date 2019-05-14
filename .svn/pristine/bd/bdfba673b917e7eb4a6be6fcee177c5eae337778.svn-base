@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[[${str}]] | 会员卡卖品权益</title>
+<link th:href="@{{sp}/css/bootstrap.min.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/font-awesome/css/font-awesome.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/css/animate.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/css/style.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/jsTree/style.min.css|" rel="stylesheet">
+</head>
+
+<body>
+    <div id="wrapper">
+        <div th:replace="../common/nav"></div>
+        <div id="page-wrapper" class="gray-bg">
+            <div th:replace="../common/top"></div>
+            <div class="row wrapper border-bottom white-bg page-heading">
+                <div class="col-sm-4">
+                    <h2>会员卡卖品权益</h2>
+                    <ol class="breadcrumb">
+                        <li><a href="index.html">Home</a></li>
+                    </ol>
+                </div>
+            </div>
+            <div class="row" th:attr="dto=${jsonMch}" id="dto">
+                <div class="col-lg-12">
+                    <div class="wrapper wrapper-content animated fadeInUp">
+                        <div class="ibox">
+                            <div class="x_content">
+                                    <div class="row">
+                                        <div class="col-md-4 col-sm-2 col-xs-12 profile_left">
+                                             <div class="ibox float-e-margins">
+                                                <div class="ibox-title">
+					                              <h5 class="discount">单品</h5>
+					                              <div class="ibox-tools">
+					                                  <a class="collapse-link"> <i class="fa fa-chevron-up"></i></a> 
+					                                  <a class="close-link"> <i class="fa fa-times"></i></a>
+					                              </div>
+					                            </div>
+					                            <div class="ibox-content">
+					                              <div id="jstree_single">
+					                                  
+					                              </div>
+					                          </div>
+					                      </div>
+                                          <div class="ibox float-e-margins">
+                                                <div class="ibox-title">
+					                              <h5 class="discount">合成品</h5>
+					                              <div class="ibox-tools">
+					                                  <a class="collapse-link"> <i class="fa fa-chevron-up"></i></a> 
+					                                  <a class="close-link"> <i class="fa fa-times"></i></a>
+					                              </div>
+					                            </div>
+					                            <div class="ibox-content">
+					                              <div id="jstree_mix">
+					                                  
+					                              </div>
+					                          </div>
+					                      </div>
+                                          <div class="ibox float-e-margins">
+                                                <div class="ibox-title">
+					                              <h5 class="discount">套餐</h5>
+					                              <div class="ibox-tools">
+					                                  <a class="collapse-link"> <i class="fa fa-chevron-up"></i></a> 
+					                                  <a class="close-link"> <i class="fa fa-times"></i></a>
+					                              </div>
+					                            </div>
+					                            <div class="ibox-content">
+					                              <div id="jstree_pack">
+					                                  
+					                              </div>
+					                          </div>
+					                      </div>
+                                        </div>
+                                        <div class="col-md-8 col-sm-10 col-xs-12"> 
+                                            <div class="row">
+                                                <div class="col-md-12">
+			                                          <form action="" onsubmit="return false;" class="form-horizontal form-label-left" >
+			                                            <div class="form-group">
+			                                            <label class="control-label col-md-3 col-sm-3 col-xs-12 " for="comdis" id="comdis_lable">单品/合成品/套餐折扣(0.01-10.00) 
+			                                            </label>
+			                                            <div class="col-md-6 col-sm-6 col-xs-12" >
+			                                              <input type="text" id="comdis" class="form-control col-md-4 col-xs-12" >
+			                                            </div>
+			                                            <div class="col-md-3 col-sm-3 col-xs-12">
+			                                                <button type="submit" class="btn btn-success save_comdis_btn" >保存</button>
+			                                            </div>
+			                                          </div>
+			                                        </form>
+                                                    <!-- 分类编辑区 -->
+                                                    <form action="" onsubmit="return false;" class="form-horizontal form-label-left">
+                                                        <div class="form-group">
+                                                        <label class="control-label col-md-3 col-sm-3 col-xs-12" for="catedis" id="catedis_label">堂食/非堂食折扣(0.01-10.00)
+                                                        </label>
+                                                        <div class="col-md-6 col-sm-6 col-xs-12">
+                                                          <input type="text" id="catedis" class="form-control col-md-4 col-xs-12">
+                                                        </div>
+                                                        <div class="col-md-3 col-sm-3 col-xs-12">
+                                                            <button type="submit" class="btn btn-success save_catedis_btn">保存</button>
+                                                        </div>
+                                                      </div>
+                                                    </form>
+                                          			<form action="" onsubmit="return false;" class="form-horizontal form-label-left" >
+			                                            <div class="form-group">
+			                                            <label class="control-label col-md-3 col-sm-3 col-xs-12" for="comdis" id="all_label">所有商品折扣(0.01-10.00) 
+			                                            </label>
+			                                            <div class="col-md-6 col-sm-6 col-xs-12" >
+			                                              <input type="text" id="all" class="form-control col-md-4 col-xs-12" >
+			                                            </div>
+			                                            <div class="col-md-3 col-sm-3 col-xs-12">
+			                                                <button type="submit" class="btn btn-success save_all_btn" >保存</button>
+			                                            </div>
+			                                          </div>
+			                                        </form>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <!-- 卖品编辑区 -->
+                                                    <div id="datatable-buttons_wrapper" class="dataTables_wrapper form-inline dt-bootstrap no-footer">
+                                                        <table class="table table-striped projects">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>图片</th>
+                                                                    <th>编号</th>
+                                                                    <th>名称</th>
+                                                                    <th>折扣</th>
+                                                                    <th>Action</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody id="goods_content">
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div> 
+                                        </div>
+                                    </div>
+                                </div> 
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div th:replace="../common/foot"></div>
+        </div>
+    </div>
+    
+    <div id="templatemo-preferences-form" style="display:none;padding-left:15px;padding-right:15px">
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_hname" class="control-label">会员等级名称</label>
+                <input type="text" class="form-control" id="mcr_hname" value="" placeholder="如初级会员">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_hname" class="control-label">会员等级描述</label>
+                <input type="text" class="form-control" id="mcr_desc" value="" placeholder="如折扣卡">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_hindex" class="control-label">内部递增序号</label>
+                <input type="text" class="form-control" id="mcr_hindex" value="" placeholder="建议从1累加">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_hnum" class="control-label">等级编号</label>
+                <input type="text" class="form-control" id="mcr_hnum" value="" placeholder="输入等级编号">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_htimes" class="control-label">积分累计规则（倍）</label>
+                <input type="text" class="form-control" id="mcr_htimes" value="" placeholder="1.1">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_period">积分清零周期</label> 
+                <select name="mcr_period" class="form-control margin-bottom-15" id="mcr_period">
+                    <option value="0000">永久有效</option>
+                    <option value="1000">每年清零</option>
+                </select>
+            </div>
+        </div>
+        <div class="row templatemo-form-buttons">
+            <div class="col-md-12">
+                <button id="do_save_mcr" class="btn btn-primary">提交</button>
+            </div>
+        </div>
+    </div>
+   <!-- Mainly scripts -->
+    <script th:src="@{{sp}/js/jquery-2.1.1.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/bootstrap.min.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/plugins/metisMenu/jquery.metisMenu.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/plugins/slimscroll/jquery.slimscroll.min.js(sp=${pub_bucket})}"></script>
+
+    <!-- Custom and plugin javascript -->
+    <script th:src="@{{sp}/js/inspinia.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/plugins/pace/pace.min.js(sp=${pub_bucket})}"></script>
+    <script th:src="|${pub_bucket}/js/plugins/jsTree/jstree.min.js|"></script>
+    <script th:src="@{{sp}/third/layer3/layer.js(sp=${pub_bucket})}" type="text/javascript"></script>
+</body>
+<style>
+.jstree-open > .jstree-anchor > .fa-folder:before {content: "\f07c";}
+.jstree-default .jstree-icon.none {width: 0;}
+</style>
+<script type="text/javascript">
+	$(document).ready(function(){
+	    $('#jstree_single').jstree({   //加载生成树
+	        'core' : {
+	            'check_callback' : true,
+	            "data" : {  
+	                "dataType" : 'json', 
+	                "opts":{  
+	                    method: "POST"
+	                },
+	                "url" : function(node){  
+	                	 return '[[${contextPath}]]/common/catalogList';
+	                },  
+	                "data" : function(node){
+	                    if(node.id !="#"){
+	                      return {"id" : node.id};
+	                    }
+	                    return {"id" : 0};
+	                }
+	            }
+	        },
+	        'plugins' : [ 'types', 'dnd', 'contextmenu' ],
+	        'types' : {
+	            'default' : {'icon' : 'fa fa-folder'},
+	            'html' : {'icon' : 'fa fa-file-code-o'},
+	            'svg' : {'icon' : 'fa fa-file-picture-o'},
+	            'css' : {'icon' : 'fa fa-file-code-o'},
+	            'img' : {'icon' : 'fa fa-file-image-o'},
+	            'js' : {'icon' : 'fa fa-file-text-o'}
+	        },
+	        contextmenu : {
+	            "items" : function(node) {
+	                return { 
+	                    "view" : {
+	                        label: "编辑节点",
+	                        action: function(data) {
+	                            view_node(data);
+	                        }
+	                    },
+	                     "create" : {
+	                        label: "创建子节点",
+	                        action: function(data) {
+	                            create_node(data);
+	                        }
+	                    },
+	                    "delete" : {
+	                        label: "删除节点",
+	                        action: function(data) {
+	                            remove_node(data);
+	                        }
+	                    } 
+	                } 
+	            }
+	        }
+	    });
+	    
+	    $('#jstree_mix').jstree({   //加载生成树
+	        'core' : {
+	            'check_callback' : true,
+	            "data" : {  
+	                "dataType" : 'json', 
+	                "opts":{  
+	                    method: "POST"
+	                },
+	                "url" : function(node){  
+	                	 return '[[${contextPath}]]/common/catalogList';
+	                },  
+	                "data" : function(node){
+	                    if(node.id !="#"){
+	                      return {"id" : node.id};
+	                    }
+	                    return {"id" : 0};
+	                }
+	            }
+	        },
+	        'plugins' : [ 'types', 'dnd', 'contextmenu' ],
+	        'types' : {
+	            'default' : {'icon' : 'fa fa-folder'},
+	            'html' : {'icon' : 'fa fa-file-code-o'},
+	            'svg' : {'icon' : 'fa fa-file-picture-o'},
+	            'css' : {'icon' : 'fa fa-file-code-o'},
+	            'img' : {'icon' : 'fa fa-file-image-o'},
+	            'js' : {'icon' : 'fa fa-file-text-o'}
+	        },
+	        contextmenu : {
+	            "items" : function(node) {
+	                return { 
+	                    "view" : {
+	                        label: "编辑节点",
+	                        action: function(data) {
+	                            view_node(data);
+	                        }
+	                    },
+	                     "create" : {
+	                        label: "创建子节点",
+	                        action: function(data) {
+	                            create_node(data);
+	                        }
+	                    },
+	                    "delete" : {
+	                        label: "删除节点",
+	                        action: function(data) {
+	                            remove_node(data);
+	                        }
+	                    } 
+	                } 
+	            }
+	        }
+	    });
+	    
+	    $('#jstree_pack').jstree({   //加载生成树
+	        'core' : {
+	            'check_callback' : true,
+	            "data" : {  
+	                "dataType" : 'json', 
+	                "opts":{  
+	                    method: "POST"
+	                },
+	                "url" : function(node){  
+	                	 return '[[${contextPath}]]/common/catalogList';
+	                },  
+	                "data" : function(node){
+	                    if(node.id !="#"){
+	                      return {"id" : node.id};
+	                    }
+	                    return {"id" : 0};
+	                }
+	            }
+	        },
+	        'plugins' : [ 'types', 'dnd', 'contextmenu' ],
+	        'types' : {
+	            'default' : {'icon' : 'fa fa-folder'},
+	            'html' : {'icon' : 'fa fa-file-code-o'},
+	            'svg' : {'icon' : 'fa fa-file-picture-o'},
+	            'css' : {'icon' : 'fa fa-file-code-o'},
+	            'img' : {'icon' : 'fa fa-file-image-o'},
+	            'js' : {'icon' : 'fa fa-file-text-o'}
+	        },
+	        contextmenu : {
+	            "items" : function(node) {
+	                return { 
+	                    "view" : {
+	                        label: "编辑节点",
+	                        action: function(data) {
+	                            view_node(data);
+	                        }
+	                    },
+	                     "create" : {
+	                        label: "创建子节点",
+	                        action: function(data) {
+	                            create_node(data);
+	                        }
+	                    },
+	                    "delete" : {
+	                        label: "删除节点",
+	                        action: function(data) {
+	                            remove_node(data);
+	                        }
+	                    } 
+	                } 
+	            }
+	        }
+	    });
+	    var mchs_id='[[${mch_id}]]';
+	    var mchs='[[${mchs}]]';
+	    var mchs_dis=mchs/100;
+	    if(mchs_dis==0){
+	    	mchs_dis="";
+	    }
+		$("#comdis").val(mchs_dis);
+	    var mchses = $("#dto").attr("dto");
+	    var mch_obj = eval('(' + mchses + ')');
+	    if(!mch_obj){
+	    	mch_obj=[];
+	    }
+	    var discount="";
+		function get_seted(set_type,set_id){
+			if (mch_obj == null) {
+				return null;
+			}
+	        for(var i=0,ic=mch_obj.length;i<ic;i++){
+	        	var seted  = mch_obj[i];
+	            if(  seted.set_type == set_type && seted.set_id == set_id){
+	            	discount=seted.set_discount;
+	                return discount;
+	            }  
+	        }
+	        return null;
+		}
+		
+   	 	let cat_id = disval = "";
+   	 	let type_code = "";
+	    // 查询单品列表
+	    $("#jstree_single").on('changed.jstree', function(event,data){
+	    	type_code = "100";
+	    	$("#goods_content").html("");
+	    	cat_id = data.node.id;
+	    	cat_text = data.node.text+"折扣(0.01-10.00)";
+	    	$("#comdis_lable").html("单品折扣(0.01-10.00)");
+	    	$("#catedis_label").html(cat_text);
+	    	 var set_discount=  get_seted("0010",cat_id)/100;
+	          if(set_discount==0||set_discount==null){
+	    		 set_discount="";
+	    	 }
+			$("#catedis").val(set_discount);
+			
+	    	$.get('[[${contextPath}]]/common/goodsList', {cat_id, type_code}, function(data) {
+	    		if(data.available) {
+	    			 if(data.obj!=null && data.obj.length!=0){
+	    				 for(let i=0; i < data.obj.length; i++){  
+    						 let goods = data.obj[i];
+                             disval=get_seted("0011",goods.id)/100;
+                             if(disval==0){
+                                disval="";
+                             }
+                             let html = `
+                             <tr>
+                            <td></td>
+                             <td>`+goods.goods_id+`</td>
+                             <td>`+goods.goods_name+`</td> 
+                             <td><input type="text" class="form-control col-md-4 col-xs-12 goodsdis" goods_attr_id="`+goods.id+`" value="`+disval+`"></td>
+                             <td><button type="submit" class="btn btn-success btn-xs save_goodsdis_btn" attr_id="`+goods.id+`" attr_type="`+goods.mchstype+`">保存</button></td>
+                             </tr> 
+                             `;
+                             $("#goods_content").append(html); 
+                         }
+	                 }                    
+	    			 $("#goods_content .save_goodsdis_btn").unbind("click").click(save_goods_dis);
+               } else {
+                   let code = data.messages[0];
+                   layer.msg(code, {icon: 2});
+               }
+            });
+	   });
+	    
+	 // 查询合成品列表
+	    $("#jstree_mix").on('changed.jstree', function(event,data){
+	    	$("#goods_content").html("");
+	    	cat_id = data.node.id; 
+			type_code = "300";
+	    	cat_text = data.node.text+"折扣(0.01-10.00)";
+	    	$("#comdis_lable").html("合成品折扣(0.01-10.00)");
+	    	$("#catedis_label").html(cat_text);
+	    	 var set_discount=  get_seted("0010",cat_id)/100;
+	          if(set_discount==0||set_discount==null){
+	    		 set_discount="";
+	    	 }
+			$("#catedis").val(set_discount);
+			
+	    	$.get('[[${contextPath}]]/common/goodsList', {cat_id, type_code}, function(data) {
+	    		if(data.available) {
+	    			 if(data.obj!=null && data.obj.length!=0){
+	    				 for(let i=0; i < data.obj.length; i++){  
+    						 let goods = data.obj[i];
+                             disval=get_seted("0011",goods.id)/100;
+                             if(disval==0){
+                                disval="";
+                             }
+                             let html = `
+                             <tr>
+                            <td></td>
+                             <td>`+goods.sn+`</td>
+                             <td>`+goods.name+`</td> 
+                             <td><input type="text" class="form-control col-md-4 col-xs-12 goodsdis" goods_attr_id="`+goods.id+`" value="`+disval+`"></td>
+                             <td><button type="submit" class="btn btn-success btn-xs save_goodsdis_btn" attr_id="`+goods.id+`" attr_type="`+goods.mchstype+`">保存</button></td>
+                             </tr> 
+                             `;
+                             $("#goods_content").append(html); 
+                         }
+	                 }                    
+	    			 $("#goods_content .save_goodsdis_btn").unbind("click").click(save_goods_dis);
+               } else {
+                   let code = data.messages[0];
+                   layer.msg(code, {icon: 2});
+               }
+            });
+	   });
+	    
+	 // 查询套餐列表
+	    $("#jstree_pack").on('changed.jstree', function(event,data){
+	    	 $("#goods_content").html("");
+	    	 cat_id = data.node.id;
+			 type_code = "200";
+	    	cat_text = data.node.text+"折扣(0.01-10.00)";
+	    	$("#comdis_lable").html("套餐折扣(0.01-10.00)");
+	    	$("#catedis_label").html(cat_text);
+	    	 var set_discount=  get_seted("0010",cat_id)/100;
+	          if(set_discount==0||set_discount==null){
+	    		 set_discount="";
+	    	 }
+			$("#catedis").val(set_discount);
+			
+	    	$.get('[[${contextPath}]]/common/goodsList', {cat_id, type_code}, function(data) {
+	    		if(data.available) {
+	    			 if(data.obj!=null && data.obj.length!=0){
+	    				 for(let i=0; i < data.obj.length; i++){  
+    						 let goods = data.obj[i];
+                             disval=get_seted("0011",goods.id)/100;
+                             if(disval==0){
+                                disval="";
+                             }
+                             let html = `
+                             <tr>
+                            <td></td>
+                             <td>`+goods.sn+`</td>
+                             <td>`+goods.name+`</td> 
+                             <td><input type="text" class="form-control col-md-4 col-xs-12 goodsdis" goods_attr_id="`+goods.id+`" value="`+disval+`"></td>
+                             <td><button type="submit" class="btn btn-success btn-xs save_goodsdis_btn" attr_id="`+goods.id+`" attr_type="`+goods.mchstype+`">保存</button></td>
+                             </tr> 
+                             `;
+                             $("#goods_content").append(html); 
+                         }
+	                 }                    
+	    			 $("#goods_content .save_goodsdis_btn").unbind("click").click(save_goods_dis);
+               } else {
+                   let code = data.messages[0];
+                   layer.msg(code, {icon: 2});
+               }
+            });
+	   });
+	   
+	    // 保存
+	    var save_set = function(set_type,set_id,set_dis,callback){
+	        var url = "[[${contextPath}]]/hierarchy/equity/save";
+	        var postdata = {
+	            "mch_id" : mchs_id
+	            ,"set_type" : set_type
+	            ,"set_id" : set_id
+	            ,"set_discount" : set_dis
+	        };
+	        var index = layer.load();
+	        $.post(url, postdata, function(msg) {
+	            layer.close(index);
+	            callback(msg);
+	        });
+	    };
+	    
+	    //单品、合成品、套餐
+	    $(".save_comdis_btn").click(function(){
+	        save_set(type_code,type_code,$("#comdis").val(),function(msg){
+	            if(msg.available){
+	                layer.alert("保存成功");
+	            }else{
+	            	layer.msg(msg.messages[0], {
+	                     icon : 2
+	                 });
+	            }
+	        })
+	    });
+	    
+	    //堂食、非堂食、饮料
+	    $(".save_catedis_btn").click(function(){
+	        if(!cat_id){
+	            layer.alert("请选中要设置折扣的分类");
+	            return;
+	        } 
+	        save_set(type_code,cat_id,$("#catedis").val(),function(msg){
+	            if(msg.available){
+	                var dis = get_seted(type_code,cat_id);
+	                if(dis){
+	                	dis = $("#catedis").val();
+	                if(mch_obj){
+			            for(var i=0,ic=mch_obj.length;i<ic;i++){
+				       	  var  mch = mch_obj[i];
+				       	   if( mch.set_type == type_code && mch.set_id == cat_id){
+				       	    mch.set_discount=dis*100; 
+				       		mch_obj.push(mch);
+				            }
+			             } 
+			            } 
+	                }else{
+	                	mch_obj.push({
+		                "mch_id":mchs_id,
+		                "set_type":type_code,
+		                 "set_id":cat_id,
+		                 "set_discount" : $("#catedis").val()*100 ,
+		                 "flag":0
+		               });
+		            }
+	                layer.alert("保存成功");
+	            }else{
+	            	layer.msg(msg.messages[0], {
+	                     icon : 2
+	                 });
+	            }
+	        });
+	    });
+	    
+	    //所有商品
+	    $(".save_all_btn").click(function(){
+	        save_set("0000","0",$("#all").val(),function(msg){
+	            if(msg.available){
+	                layer.alert("保存成功");
+	            }else{
+	            	layer.msg(msg.messages[0], {
+	                     icon : 2
+	                 });
+	            }
+	        })
+	    });
+	    
+	    //单个商品
+	    var save_goods_dis = function(){
+	        var goods_id = $(this).attr("attr_id");
+	        var discount = $("input[goods_attr_id="+goods_id+"]").val();
+	        save_set(type_code,goods_id,discount,function(msg){
+	        	if(msg.available){
+	                var dis = get_seted(type_code,goods_id);
+	                if(dis){
+	                	dis = discount;
+	                if(mch_obj){
+			          for(var i=0,ic=mch_obj.length;i<ic;i++){
+				      var  mch = mch_obj[i];
+				       	if( mch.set_type == type_code && mch.set_id == goods_id){
+				       	   mch.set_discount=dis*100; 
+				       	   mch_obj.push(mch);
+				            }
+			             } 
+			          }
+	                }else{
+	                	mch_obj.push({
+	                        "mch_id":mchs_id,
+	                        "set_type":type_code,
+	                        "set_id":goods_id,
+	                        "set_discount" : discount*100,
+	                        "flag":0
+	                    });
+	                }
+	                layer.alert("保存成功");
+	               }else{
+	            	
+	            	layer.msg(msg.messages[0], {
+	                     icon : 2
+	                 });
+	            }
+	           
+	        });
+	    }; 
+	    
+	});
+</script>
+</html>

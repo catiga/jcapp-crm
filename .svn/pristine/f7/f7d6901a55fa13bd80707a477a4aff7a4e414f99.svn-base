@@ -1,0 +1,73 @@
+package com.jeancoder.crm.entry.hierarchy
+
+import java.util.ArrayList
+import java.util.List
+
+import com.jeancoder.app.sdk.JC
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.crm.ready.common.AvailabilityStatus
+import com.jeancoder.crm.ready.constant.SimpleAjax
+import com.jeancoder.crm.ready.dto.mc.HierarchyMcDto
+import com.jeancoder.crm.ready.dto.mc.McHierchHiDto
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.MemberCardRule
+import com.jeancoder.crm.ready.mcbridge.MCFactory
+import com.jeancoder.crm.ready.mcbridge.bring.DXMCBringInstance
+import com.jeancoder.crm.ready.mcbridge.bring.MCBring
+import com.jeancoder.crm.ready.mcbridge.ret.MCardLevelRet
+import com.jeancoder.crm.ready.service.MemberCardHierarchyService
+import com.jeancoder.crm.ready.service.MemberCardRuleService
+import com.jeancoder.crm.ready.util.GlobalHolder
+
+
+JCLogger logger = LoggerSource.getLogger();
+def mcr_id  = JC.request.param("mcr_id");
+try {
+	MemberCardRule  rule = MemberCardRuleService.INSTANSE.getItem(new BigInteger(mcr_id));
+	if (rule == null) {
+		return AvailabilityStatus.notAvailable("会员规则不存在");
+	}
+	if (rule.outer_type.equals("0")) {
+		return AvailabilityStatus.notAvailable("外部会员卡才能同步");
+	}
+	SimpleAjax ajax = JC.internal.call(SimpleAjax,"ticketingsys", "/store/store_list", [pid:GlobalHolder.proj.id.toString()])
+	if (!ajax.available) {
+		return ajax;
+	}
+	if (ajax.data == null || ajax.data.size()  == 0) {
+		return SimpleAjax.notAvailable("请添加门店")
+	}
+	//MCBring bring = MCFactory.generate(rule);
+	def bring =  MCFactory.generate(rule);
+	MCardLevelRet ret = bring.query_levels(ajax.data.get(0).store_no);
+	if (!ret.isSuccess()) {
+		return SimpleAjax.notAvailable(ret.rmCode + ":"+ret.rmMsg);
+	}
+	List<MemberCardHierarchy> seria_datas = new ArrayList<MemberCardHierarchy>();
+	for (McHierchHiDto item : ret.dtolist) {
+		MemberCardHierarchy mci = new MemberCardHierarchy();
+		mci.cr_discount = item.cr_discount;
+		mci.cr_type = item.cr_type
+		mci.cr_type_desc= item.cr_type_desc
+		mci.day_buy_limit = item.day_buy_limit
+		mci.h_name = item.h_name
+		mci.h_num = item.h_num
+		mci.init_recharge = item.init_recharge
+		mci.least_recharge = item.least_recharge
+		mci.show_buy_limit = item.show_buy_limit
+		mci.getpay = item.least_recharge;
+		mci.supp_recharge = 1;// 充值
+		seria_datas.add(mci);
+	}
+	MemberCardHierarchyService.INSTANSE.sync_mc_his(seria_datas, rule);
+	return SimpleAjax.available("",ret.dtolist);
+} catch (Exception e ) {
+	logger.error("",e);
+	return SimpleAjax.notAvailable("同步会员等级失败")
+}
+
+
+
+
+

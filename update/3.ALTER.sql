@@ -1,0 +1,44 @@
+/*20180830*/
+ALTER TABLE `data_account_session` ADD COLUMN `ap_id` BIGINT(20) AFTER `basic_id`;
+
+/*20180831*/
+ALTER TABLE `data_tp_result` ADD COLUMN `altitude` VARCHAR(255) AFTER `flag`;
+ALTER TABLE `data_tp_result` ADD COLUMN `longitude` VARCHAR(255) AFTER `flag`;
+
+
+/*20180906*/
+ALTER TABLE `mm_order_mc` ADD COLUMN `s_id` BIGINT(20) DEFAULT NULL;
+ALTER TABLE `mm_order_mc` ADD COLUMN `s_name` varchar(30) DEFAULT NULL;
+ 
+/**20180909****/
+ALTER TABLE `mm_order_mc` ADD COLUMN `mobile` VARCHAR(20) DEFAULT NULL;
+ 
+
+/**20180911****/
+ALTER TABLE `account_info` ADD COLUMN `user_no` VARCHAR(255) DEFAULT NULL;
+
+
+/**20180914****/
+ALTER TABLE `mm_account_project_mc_detail` ADD COLUMN `d_num` VARCHAR(255) DEFAULT NULL COMMENT '退款对应的原交易编号';
+ALTER TABLE `mm_account_project_mc_detail` modify `num` VARCHAR(255) DEFAULT NULL COMMENT '交易编号';
+
+/**20180918****/
+ALTER TABLE `mm_pre_mc_order_item` ADD `cards_identifier` VARCHAR(30) DEFAULT NULL COMMENT '卡编号';
+
+/**20180919****/
+ALTER TABLE mm_order_mc ADD COLUMN `store_id` BIGINT(20);
+ALTER TABLE mm_order_mc ADD COLUMN `store_name` VARCHAR (20);
+ALTER TABLE mm_order_recharge_mc ADD COLUMN `store_name` VARCHAR (20);
+
+/**20180920****/
+ALTER TABLE mm_account_project_mc ADD COLUMN `receive_time` DATETIME DEFAULT NULL COMMENT '会员等级生效时间';
+UPDATE mm_account_project_mc SET receive_time = a_time ;
+
+
+/**20181015****/
+ALTER TABLE mm_order_mc ADD COLUMN `mc_name` VARCHAR(20);
+ALTER TABLE mm_order_mc ADD COLUMN `id_card` VARCHAR(20);
+ALTER TABLE mm_order_mc ADD COLUMN `pre_item_id` BIGINT (20);
+
+/**20190306 退款时间****/
+ALTER TABLE mm_order_recharge_mc ADD COLUMN `refund_time` datetime;

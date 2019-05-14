@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[[${str}]] | 预制卡管理</title>
+<link th:href="@{{sp}/css/bootstrap.min.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/font-awesome/css/font-awesome.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/css/animate.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/css/style.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/css/plugins/select2/select2.min.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/css/plugins/switchery/switchery.css(sp=${pub_bucket})}" rel="stylesheet">
+
+<link th:href="|${pub_bucket}/css/plugins/summernote/summernote.css|" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/summernote/summernote-bs3.css|" rel="stylesheet">
+
+<link th:href="|${pub_bucket}/css/plugins/ladda/ladda-themeless.min.css|" rel="stylesheet">
+</head>
+
+<body>
+	<div id="wrapper">
+		<div th:replace="../common/nav"></div>
+		<div id="page-wrapper" class="gray-bg">
+			<div th:replace="../common/top"></div>
+			<div class="row wrapper border-bottom white-bg page-heading">
+				<div class="col-lg-10">
+					<h2>预制卡管理</h2>
+					<ol class="breadcrumb">
+						<li><a href="index.html">Home</a></li>
+						<li><a href="javascript:;">预制卡管理</a></li>
+						<li class="active"><strong>创建预制卡订单</strong></li>
+					</ol>
+				</div>
+				<div class="col-lg-2"></div>
+			</div>
+			<div class="wrapper wrapper-content animated fadeInRight">
+				
+				<div class="row">
+					<div class="col-lg-5">
+						<div class="ibox float-e-margins">
+							<div class="ibox-title">
+								<h5>基本信息</h5>
+								<div class="ibox-tools">
+									<a class="collapse-link"> <i class="fa fa-chevron-up"></i></a> 
+									<a class="dropdown-toggle" data-toggle="dropdown" href="/scm/goods/index"> <i class="fa fa-wrench"></i></a>
+									<ul class="dropdown-menu dropdown-user">
+										<li><a href="javascript:;">暂无</a></li>
+									</ul>
+									<a class="close-link"> <i class="fa fa-times"></i></a>
+								</div>
+							</div>
+							<div class="ibox-content">
+								<form class="form-horizontal">
+									<div class="form-group">
+										<label class="col-lg-2 control-label">名称</label>
+										<div class="col-lg-10">
+											<input type="text" placeholder="预制卡订单名称" class="form-control" name="o_name" id="o_name" th:value="${order.name}">
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-lg-2 control-label">信息</label>
+										<div class="col-lg-10">
+											<input type="text" placeholder="信息" class="form-control" name="o_info" id="o_info" th:value="${order.info}">
+										</div>
+									</div>
+									<div class="form-group">
+										<label class="col-lg-2 control-label">编号</label>
+										<div class="col-lg-10">
+											<input type="text" placeholder="为空则自动生成" class="form-control" name="o_sn" id="o_sn" th:value="${order.order_num}">
+										</div>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+					<div class="col-lg-7">
+						<div class="ibox float-e-margins">
+							<div class="ibox-title">
+								<h5>基本信息</h5>
+								<div class="ibox-tools">
+									<a class="collapse-link"> <i class="fa fa-chevron-up"></i></a> 
+									<a class="dropdown-toggle" data-toggle="dropdown" href="form_basic.html#"> <i class="fa fa-wrench"></i></a>
+									<ul class="dropdown-menu dropdown-user">
+										<li><a href="javascript:;">暂无</a></li>
+									</ul>
+									<a class="close-link"> <i class="fa fa-times"></i></a>
+								</div>
+							</div>
+							<div id="mc_all" style="display:none;">[[${mc_all}]]</div>
+							<div class="ibox-content">
+								<div class="row">
+									<div class="col-sm-8 b-r">
+										<form class="form-horizontal">
+											<div class="form-group">
+												<label class="col-lg-2 control-label">卡规则</label>
+												<div class="col-lg-10">
+													<select name="mc_list" id="mc_list" class="form-control mc_list">
+														 <option></option>
+														<!--<option th:each="w:${mc_all}" th:selected="${w.id==order.mcr_id}" th:value="${w.id}" th:text="${w.title}"></option> -->
+													</select>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="col-lg-2 control-label">卡等级</label>
+												<div class="col-lg-10">
+													<select name="mch_list" id="mch_list1" class="form-control mch_list">
+														<option  th:value="${order.mch_id}" th:text="${order.mch_name}" ></option> 
+													</select>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="col-lg-2 control-label">预制卡数量</label>
+												<div class="col-lg-10">
+													<input type="text" placeholder="请输入预制卡数量" id="o_total" class="form-control o_total" th:value="${order.total_num}">
+												</div>
+											</div>
+										</form>
+									</div>
+									<div class="col-sm-4">
+										<h4>快速操作</h4>
+										<p>仅保存基本信息并返回:</p>
+										<button data-style="zoom-in" class="ladda-button btn btn-primary btn-lg save_basic_info"><i class="fa fa-pencil"></i> 保存 </button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+
+				<div class="row">
+					<div class="col-lg-12">
+						<div class="ibox float-e-margins">
+							<div class="ibox-title">
+								<h5>信息</h5>
+								<button id="edit" class="btn btn-primary btn-xs m-l-sm edit_content" type="button">编辑</button>
+								<button id="save" class="btn btn-primary  btn-xs save_content" type="button">保存</button>
+							</div>
+							<div class="ibox-content no-padding">
+								<div class="click2edit wrapper p-md" th:utext="${order.content}"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div th:replace="../common/foot"></div>
+		</div>
+	</div>
+	
+	<!-- Mainly scripts -->
+	<script th:src="@{{sp}/js/jquery-2.1.1.js(sp=${pub_bucket})}"></script>
+	<script th:src="@{{sp}/js/bootstrap.min.js(sp=${pub_bucket})}"></script>
+	<script th:src="@{{sp}/js/plugins/metisMenu/jquery.metisMenu.js(sp=${pub_bucket})}"></script>
+	<script th:src="@{{sp}/js/plugins/slimscroll/jquery.slimscroll.min.js(sp=${pub_bucket})}"></script>
+	
+	<script th:src="@{{sp}/js/plugins/select2/select2.full.min.js(sp=${pub_bucket})}"></script>
+	<script th:src="@{{sp}/js/plugins/switchery/switchery.js(sp=${pub_bucket})}"></script>
+
+	<!-- Custom and plugin javascript -->
+	<script th:src="@{{sp}/js/inspinia.js(sp=${pub_bucket})}"></script>
+	<script th:src="@{{sp}/js/plugins/pace/pace.min.js(sp=${pub_bucket})}"></script>
+	
+	<script th:src="@{{sp}/third/layer3/layer.js(sp=${pub_bucket})}" type="text/javascript"></script>
+	
+	<!-- SUMMERNOTE -->
+    <script th:src="|${pub_bucket}/js/plugins/summernote/summernote.min.js|"></script>
+    
+    <!-- Ladda -->
+    <script th:src="|${pub_bucket}/js/plugins/ladda/spin.min.js|"></script>
+    <script th:src="|${pub_bucket}/js/plugins/ladda/ladda.min.js|"></script>
+    <script th:src="|${pub_bucket}/js/plugins/ladda/ladda.jquery.min.js|"></script>
+    
+	<script>
+		$(document).ready(function() {
+			$('#loading-example-btn').click(function() {
+				btn = $(this);
+				simpleLoad(btn, true)
+
+				// Ajax example
+				//                $.ajax().always(function () {
+				//                    simpleLoad($(this), false)
+				//                });
+
+				simpleLoad(btn, false)
+			});
+		});
+	
+		function simpleLoad(btn, state) {
+			if (state) {
+				btn.children().addClass('fa-spin');
+				btn.contents().last().replaceWith(" Loading");
+			} else {
+				setTimeout(function() {
+					btn.children().removeClass('fa-spin');
+					btn.contents().last().replaceWith(" Refresh");
+				}, 2000);
+			}
+		}
+	</script>
+</body>
+
+<script type="text/javascript">
+$(function() {
+	$('.summernote').summernote();
+	var g = '[[${o_id}]]';
+	
+	var l = $(".ladda-button").ladda();
+	
+	$(".edit_content").on("click", function() {
+		$('.click2edit').summernote({focus: true});
+	});
+	
+	$(".save_content").on("click", function() {
+		var aHTML = $('.click2edit').code(); //save HTML If you need(aHTML: array).
+		$.post('/crm/predo/aj/save_content', {id:g,content:aHTML}, function(data) {
+			if(data.available) {
+				layer.msg('信息保存成功');
+				$('.click2edit').destroy();
+			} else {
+				var code = data.messages[0];
+				var msg = "操作失败：" + code;
+				layer.msg(msg, {shift: 6});
+			}
+		});
+	});
+	$.ajax({
+        type: "POST",//请求方式
+        url:'[[${contextPath}]]/get_member_card_rule_list',
+        dataType: "json",
+　 		success: function(data){
+    	var table1 = data.obj;
+		for (var i = 0; i < table1.length; i++) {
+			var item1 = table1[i];
+			$("#mc_list").append("<option value=\""+item1.id+"\">"+item1.title+"</option>");
+			var order_mc_id ='[[${order.mcr_id}]]';
+			if(order_mc_id!=''){
+				$('#mc_list option[value='+order_mc_id+']').attr("selected","selected");
+			}
+		 } 
+		}
+    });
+	var id=null
+  	$(".mc_list").change(function(){
+  		id=$(this).val();/*获取选中的option值*/
+  		$("#mch_list1").find("option").remove();
+  		$.ajax({
+  		   type: "POST",//请求方式
+  		   url:'[[${contextPath}]]/get_all_hierarchy_list',
+  		   dataType: "json",
+  		　   success: function(data){
+  		   var table = data.obj;
+  			  for (var i = 0; i < table.length; i++) {
+  				var item = table[i];
+  				if(item.mc_id==id){
+  					$("#mch_list1").append("<option value=\""+item.id+"\">"+item.h_name+"</option>");
+  				 }
+  			  }
+  			}
+  		 })
+  	});
+  
+	$(".save_basic_info").on("click", function() {
+		var o_name = $.trim($("#o_name").val());
+		var o_sn = $.trim($("#o_sn").val());
+		var o_info = $.trim($("#o_info").val());
+		var mcr_id = $.trim($("#mc_list").val());
+		var mch_id = $.trim($("#mch_list1").val());
+		var o_num = $.trim($("#o_total").val());
+		$this = $(this);
+		$this.ladda('start');
+		$.post('/crm/predo/aj/save_base', {id:g,name:o_name,info:o_info,sn:o_sn,mcr_id:mcr_id,mch_id:mch_id,o_num:o_num}, function(data) {
+			$this.ladda('stop');
+			if(data.available) {
+				g = data.data;
+				layer.msg('基本信息保存成功');
+				location.href="/crm/predo/index?"+new Date().getTime();
+			} else {
+				var code = data.messages[0];
+				var msg = "操作失败：" + code;
+				layer.msg(msg, {shift: 6});
+			}
+		});
+	});
+	
+});
+</script>
+
+</html>

@@ -1,0 +1,58 @@
+package com.jeancoder.crm.entry
+
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.app.sdk.source.RequestSource
+import com.jeancoder.app.sdk.source.ResponseSource
+import com.jeancoder.core.http.JCRequest
+import com.jeancoder.core.http.JCResponse
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.core.result.Result
+import com.jeancoder.crm.ready.common.AvailabilityStatus
+import com.jeancoder.crm.ready.entity.MemberCardRule
+import com.jeancoder.crm.ready.service.MemberCardRuleService
+import com.jeancoder.crm.ready.util.RemoteUtil
+import com.jeancoder.crm.ready.util.StringUtil
+
+/**
+ * 添加一条会员规则
+ */
+
+Result result = new Result();
+JCRequest request = RequestSource.getRequest();
+JCResponse response = ResponseSource.getResponse();
+JCLogger Logger = LoggerSource.getLogger(this.getClass().getName());
+try {
+	String mcr_title = request.getParameter("mcr_title");
+	String mcr_info = request.getParameter("mcr_info");
+	String mcr_mcflk = request.getParameter("mcr_mcflk");
+	String mcr_level = request.getParameter("mcr_level");
+	String mcr_outer_type = request.getParameter("mcr_outer_type");
+	String mcr_supp_jf = request.getParameter("mcr_supp_jf");
+	Long project_id = RemoteUtil.getProj().id;
+	if (StringUtil.isEmpty(mcr_title) || StringUtil.isEmpty(mcr_info) || StringUtil.isEmpty(mcr_mcflk)|| StringUtil.isEmpty(mcr_outer_type) || StringUtil.isEmpty(mcr_supp_jf)) {
+		return result.setData(AvailabilityStatus.notAvailable("参数不能为空"));
+	}
+	/**
+	 * 检查升级规则是否正确
+	 */
+	/*if(HierarchType.getHierarchType(h_type) == null) {
+		return result.setData(AvailabilityStatus.notAvailable("参数错误"));
+	}*/
+	//参数校验
+	MemberCardRule mcr = new MemberCardRule();
+	mcr.title = mcr_title;
+	mcr.info = mcr_info;
+	mcr.mcflk = mcr_mcflk;
+	mcr.mc_level = 1;
+	mcr.outer_type = mcr_outer_type;
+	mcr.supp_jf = Integer.parseInt(mcr_supp_jf);
+	mcr.pid = new BigInteger(project_id.toString());
+	String resultStr = MemberCardRuleService.INSTANSE.saveItem(mcr);
+	if (!StringUtil.isEmpty(resultStr)) {
+		AvailabilityStatus.notAvailable(resultStr);
+	}
+	return AvailabilityStatus.available();
+} catch (Exception e) {
+	Logger.error("保存会员卡规则失败", e);
+	return AvailabilityStatus.notAvailable("保存失败");
+}

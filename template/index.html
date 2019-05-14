@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[[${str}]] | 会员卡规则管理</title>
+ 
+<link th:href="|${pub_bucket}/css/bootstrap.min.css|" rel="stylesheet">
+<link th:href="|${pub_bucket}/font-awesome/css/font-awesome.css|" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/animate.css|" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/style.css|" rel="stylesheet">
+
+</head>
+
+<body>
+    <div id="wrapper">
+        <div th:replace="common/nav"></div>
+        <div id="page-wrapper" class="gray-bg">
+            <div th:replace="common/top"></div>
+            <div class="row wrapper border-bottom white-bg page-heading">
+                <div class="col-sm-4">
+                    <h2>会员规则管理</h2>
+                    <ol class="breadcrumb">
+                        <li><a href="javascript:;">Home</a></li>
+                        <li class="active"><strong>会员规则管理</strong></li>
+                    </ol>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="wrapper wrapper-content animated fadeInUp">
+
+                        <div class="ibox">
+                            <div class="ibox-title">
+                                <h5>会员规则列表</h5>
+                                <div class="ibox-tools">
+                                    <div th:if=" ${is_root}">
+                                        <a href="javascript:void(0)" class="btn btn-primary btn-xs add_member">创建会员规则</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ibox-content">
+                                <div class="row m-b-sm m-t-sm">
+                                    <div class="col-sm-9 m-b-xs">
+                                        <!-- <button type="button" id="loading-example-btn" class="btn btn-white btn-sm">
+                                            <i class="fa fa-refresh"></i> Refresh
+                                        </button> -->
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <!-- <div class="input-group">
+                                            <input type="text" placeholder="Search" class="input-sm form-control"> <span class="input-group-btn">
+                                                <button type="button" class="btn btn-sm btn-primary"> Go!</button>
+                                            </span>
+                                        </div> -->
+                                    </div>
+                                </div>
+                                 <div class="x_content">     
+                                    <table id="datatable-buttons" class="table table-striped table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>标题</th>
+                                                <th style="width: 10%">说明</th>
+                                                <th>类型</th>
+                                                <!-- <th>积分设置</th> -->
+                                                <th>前缀</th>
+                                                <th>状态</th>
+                                                <th style="width: 30%">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <div class="text-c odd" role="row" th:each="r : ${page.result}">
+                                                <tr>
+                                                <td>
+                                                    [[${r.title }]]<br/>
+                                                </td>
+                                                <td>[[${r.info }]]</td>
+                                                <td>
+                                                    <div th:if=" ${ r.outer_type == 0 &&  r.mcflk=='2000'}">  购买折扣制 </div>
+                                                    <div th:if=" ${r.outer_type == 0 && r.mcflk=='3000'}"> 充值消费制 </div>
+                                                    <div th:if=" ${r.outer_type != 0}"> 
+                                                         <div class="text-c odd" role="row" th:each="asm : ${all_supp_mcs}">
+                                                             <div th:if="${asm.cc_num==r.outer_type}">
+                                                                [[${asm.cc_name}]]
+                                                             </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+	                                                <div th:if="${is_root}">
+	                                                    <a th:if="${ r.outer_type != 0 }"  >
+                                                            外部会员卡
+                                                        </a>
+	                                                    <a th:if="${r.outer_type==0 && r.prefix==null }" href="javascript:void(0)" class="set_prefix" th:value="${r.id }" th:attr="prefix=${r.prefix}">
+	                                                        点击设置
+	                                                    </a>
+	                                                    
+	                                                     <a th:if="${r.outer_type==0 && r.prefix !=null }"  th:value="${r.id }" th:attr="prefix=${r.prefix}">
+	                                                        [[${r.prefix }]]
+	                                                    </a>
+	                                                </div>
+	                                                <div th:if="${!is_root}">
+                                                            [[${r.prefix }]]
+	                                                </div>
+                                                    
+                                                </td>                                                
+                                                <td id="td_status_${r.id }" th:value="${r.id }">
+                                                    <div th:if="${r.mcr_status=='10' }">停用</div>
+                                                    <div th:if="${r.mcr_status=='00' }">启用</div>
+                                                </td>
+                                                <td>
+                                                    <div th:if="${is_root}">
+	                                                    <a href="javascript:void(0)" class="btn btn-info btn-xs do_edit" th:value="${r.id }"><i class="fa fa-pencil"></i> 编辑 </a>
+	                                                    <a th:if="${r.mcr_status=='00' }" href="javascript:void(0)" class="btn btn-danger btn-xs  switch_s" th:value="${r.id }"><i class="fa fa-pencil"></i> 停用 </a>
+	                                                    <a th:if="${r.mcr_status=='10' }" href="javascript:void(0)" class="btn btn-success btn-xs switch_s" th:value="${r.id }"><i class="fa fa-pencil"></i> 启用 </a>
+	                                                    <a href="javascript:void(0)" class="btn btn-dark btn-xs do_set_hierarchy" th:value="${r.id }"><i class="fa fa-pencil"></i> 管理会员等级 </a>
+	                                                    <a th:if="${r.outer_type == 0}" href="javascript:void(0)" class="btn btn-warning btn-xs do_set_hp_rule" th:value="${r.id }" th:attr="mc_start_cn=${r.start_cn},mc_end_cn=${r.end_cn},mc_prefix=${r.a_mc_prefix},mc_h_prefix=${r.a_mch_prefix}"><i class="fa fa-pencil"></i> 设置发卡规则  </a>
+                                                    </div>  
+                                                </td>
+                                               </tr>  
+                                            </div>
+                                        </tbody>
+                                    </table>
+                                    <div th:replace="common/page"></div>
+                                    <!-- end project list -->
+                                    
+                                    <div class="clearfix"></div>
+                      
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div th:replace="common/foot"></div>
+        </div>
+    </div>
+    
+       <div id="templatemo-preferences-form" style="display:none;padding-left:15px;padding-right:15px">
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_title" class="control-label">规则名称</label>
+                <input type="text" class="form-control" id="mcr_title" value="" placeholder="会员规则名称">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_outer_type" class="control-label">会员支持类型</label>
+                <select name="mcr_outer_type" class="form-control margin-bottom-15" id="mcr_outer_type">
+                    <option th:value="${type.cc_num}"  th:each="type : ${all_supp_mcs}">[[${type.cc_name}]]</option>
+                    <!-- <option value="10010">鼎新会员卡</option> -->
+                </select>
+            </div>
+        </div>
+        <div class="row">
+          <!--   <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_level" class="control-label">是否通用</label>
+                <select name="mcr_level" class="form-control margin-bottom-15" id="mcr_level">
+                    <option value="1">多店通用</option>
+                    <option value="2">单店使用</option>
+                </select>
+            </div> -->
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_info" class="control-label">规则说明</label>
+                <input type="text" class="form-control" id="mcr_info" value="" placeholder="会员卡规则说明信息">
+            </div>
+           <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_mcflk" class="control-label">规则类型</label>
+                <select name="mcr_mcflk" class="form-control margin-bottom-15" id="mcr_mcflk">
+                    <!-- <option value="1000">消费积分制</option> -->
+                   <!--  <option value="2000">权益卡</option> -->
+                    <option value="3000">储值卡</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- 内部开始 -->
+        <div class="row row_inner">
+            <div class="col-md-12 margin-bottom-15">
+                <label for="mcr_supp_jf" class="control-label">消费积分</label>
+                <select name="mcr_supp_jf" class="form-control margin-bottom-15" id="mcr_supp_jf">
+                    <!-- <option value="1">支持</option> -->
+                    <option value="0">不支持</option>
+                </select>
+            </div>
+        </div>
+        <div class="row" style="display:none">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_type" class="control-label">积分类型</label>
+                <select name="mcr_type" class="form-control margin-bottom-15" id="mcr_type">
+                    <option value="1000">固定会员制</option>
+                    <option value="2000">浮动会员制</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="outer_mc" style="display:none">
+	        <div class="row row_inner">
+	            <div class="col-md-12 margin-bottom-15">
+	                <label for="mcr_supp_jf" class="control-label">会员接口地址</label>
+	               <input type="text" class="form-control" id="outer_uri" value="" placeholder="请输入外部会员卡地址">
+	            </div>
+	        </div>
+	        <div class="row" >
+	            <div class="col-md-6 margin-bottom-15">
+	                <label for="mcr_type" class="control-label">访问编号</label>
+	                <input type="text" class="form-control" id="outer_pc_num" value="" placeholder="请输入访问编号">
+	            </div>
+	             <div class="col-md-6 margin-bottom-15">
+	                <label for="mcr_supp_jf" class="control-label">编号密钥</label>
+	                <input type="text" class="form-control" id="outer_pc_key" value="" placeholder="请输入编号密钥">
+	            </div>
+	        </div>
+       </div>
+        <div class="has-success has-feedback row_inner">
+            <div class="row">
+                <div class="col-md-12 margin-bottom-15">
+                    <label for="proj_config" class="control-label">说明</label><br/>
+                    <!-- <span>消费积分制：会员通过消费获取积分，积分值大小决定其会员等级</span><br/> -->
+                    <span>权益卡：通过购买获取线上消费折扣资格，不同等级不同折扣</span><br/>
+                    <span>储值卡：支持线上储值，根据首次充值金额区别会员初始等级</span>
+                    <hr>
+                    <span>备注：会员规则添加后除基本信息外不可修改，请谨慎操作。每个规则下可添加多种会员等级。</span>
+                </div>
+            </div>
+        </div>
+        <div class="row templatemo-form-buttons" style="margin-top:15px">
+            <div class="col-md-12">
+                <button id="do_save_mcr" class="btn btn-primary" style="width:100%">提交</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-12 col-sm-12" id="check_box_list" style="display:none">
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" role="tablist" id="templatemo-tabs">
+            <li class="active"><a href="#home" role="tab" data-toggle="tab">项目列表</a></li>
+        </ul>
+        <!-- Tab panes -->
+        <div class="tab-content">
+        </div>
+        <!-- tab-content -->
+    </div>
+    
+    <div id="templatemo-preferences-update" style="display:none;padding-left:15px;padding-right:15px">
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_title_update" class="control-label">规则名称</label>
+                <input type="text" class="form-control" id="mcr_title_update" value="" placeholder="会员卡规则名称">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_outer_type_update" class="control-label">会员支持类型</label>
+                <select name="mcr_outer_type_update" class="form-control margin-bottom-15" id="mcr_outer_type_update" disabled="disabled">
+                    <option th:value="${type.cc_num}"  th:each="type : ${all_supp_mcs}">[[${type.cc_name}]]</option>
+                    <!-- <option value="10010">鼎新会员卡</option> -->
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_info_update" class="control-label">规则说明</label>
+                <input type="text" class="form-control" id="mcr_info_update" value="" placeholder="会员卡规则说明信息">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_supp_jf_update" class="control-label">消费积分</label>
+                <select name="mcr_supp_jf_update" class="form-control margin-bottom-15" id="mcr_supp_jf_update">
+                   <!--  <option value="1">支持</option> -->
+                    <option value="0">不支持</option>
+                </select>
+            </div>
+        </div>
+        <div id="update_outer_mc" style="display:none">
+            <div class="row row_inner">
+                <div class="col-md-12 margin-bottom-15">
+                    <label for="mcr_supp_jf" class="control-label">会员接口地址</label>
+                   <input type="text" class="form-control" id="update_outer_uri" value="" placeholder="请输入外部会员卡地址">
+                </div>
+            </div>
+            <div class="row" >
+                <div class="col-md-6 margin-bottom-15">
+                    <label for="mcr_type" class="control-label">访问编号</label>
+                    <input type="text" class="form-control" id="update_outer_pc_num" value="" placeholder="请输入访问编号">
+                </div>
+                 <div class="col-md-6 margin-bottom-15">
+                    <label for="mcr_supp_jf" class="control-label">编号密钥</label>
+                    <input type="text" class="form-control" id="update_outer_pc_key" value="" placeholder="请输入编号密钥">
+                </div>
+            </div>
+       </div>
+       
+        
+        <!-- 内部开始 -->
+        <div class="row" style="display:none">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mcr_type_update" class="control-label">积分类型</label>
+                <select name="mcr_type_update" class="form-control margin-bottom-15" id="mcr_type_update">
+                    <option value="1000">固定会员制</option>
+                    <option value="2000">浮动会员制</option>
+                </select>
+            </div>
+        </div>
+        <div class="has-success has-feedback row_inner">
+            <div class="row">
+                <div class="col-md-12 margin-bottom-15">
+                    <label for="proj_config_update" class="control-label">说明</label><br/>
+                    <!-- <span>消费积分制：会员通过消费获取积分，积分值大小决定其会员等级</span><br/> -->
+                    <span>权益卡：通过购买获取线上消费折扣资格，不同等级不同折扣</span><br/>
+                    <span>储值卡：支持线上储值，根据首次充值金额区别会员初始等级</span>
+                    <hr>
+                    <span>备注：会员规则添加后除基本信息外不可修改，请谨慎操作。每个规则下可添加多种会员等级。</span>
+                </div>
+            </div>
+        </div>
+        <!-- 内部结束 -->
+        <div class="row templatemo-form-buttons">
+            <div class="col-md-12">
+                <button id="do_save_mcr_update" class="btn btn-primary">更新</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-12 col-sm-12" id="check_box_list_update" style="display:none">
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" role="tablist" id="templatemo-tabs">
+            <li class="active"><a href="#home" role="tab" data-toggle="tab">门店列表</a></li>
+        </ul>
+        <!-- Tab panes -->
+        <div class="tab-content">
+        </div>
+        <!-- tab-content -->
+    </div>
+    
+    <div id="templatemo-preferences-form-3" style="display:none;padding-left:15px;padding-right:15px">
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mc_prefix" class="control-label">附加规则前缀</label>
+                <select name="mc_prefix" class="form-control margin-bottom-15" id="mc_prefix">
+                    <option value="1">附加</option>
+                </select>
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mc_h_prefix" class="control-label">附加等级前缀</label>
+                <select name="mc_h_prefix" class="form-control margin-bottom-15" id="mc_h_prefix">
+                    <option value="1">附加</option>
+                    <option value="0">不附加</option>
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mc_start_cn" class="control-label">开始编号</label>
+                <input type="text" class="form-control" id="mc_start_cn" placeholder="请输入会员卡号开始位">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mc_end_cn" class="control-label">截止编号</label>
+                <input type="text" class="form-control" id="mc_end_cn" placeholder="请输入会员卡号截止位">
+            </div>
+        </div>
+        <div class="has-success has-feedback row_inner">
+            <div class="row">
+                <div class="col-md-12 margin-bottom-15">
+                    <label for="proj_config" class="control-label">说明</label><br/>
+                    <span>会员卡编号生成规则</span><br/>
+                    <hr>
+                    <span>备注：设定后不可修改，请谨慎操作</span>
+                </div>
+            </div>
+        </div>
+        <div class="row templatemo-form-buttons">
+            <div class="col-md-12">
+                <button id="do_set_cn_rule" class="btn btn-primary">提交</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="templatemo-preferences-form-2" style="display:none;padding-left:15px;padding-right:15px">
+        <div class="row">
+            <div class="col-md-12 margin-bottom-15">
+                <label for="mcr_prefix" class="control-label">规则前缀</label>
+                <input type="text" class="form-control" id="mcr_prefix" placeholder="请输入会员卡规则前缀">
+            </div>
+        </div>
+        <div class="has-success has-feedback row_inner">
+            <div class="row">
+                <div class="col-md-12 margin-bottom-15">
+                    <label for="proj_config" class="control-label">说明</label><br/>
+                    <span>规则前缀可为数字和字母的组合或纯数字／字母</span><br/>
+                    <span>规则前缀用来生成卡号的开始位</span><br/>
+                    <hr>
+                    <span>备注：规则前缀设定后不可修改，请谨慎操作</span>
+                </div>
+            </div>
+        </div>
+        <div class="row templatemo-form-buttons">
+            <div class="col-md-12">
+                <button id="do_set_prefix" class="btn btn-primary">提交</button>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div id="templatemo-preferences-form-4" style="display:none;padding-left:15px;padding-right:15px">
+        <div class="row">
+            <div class="col-md-12 margin-bottom-15">
+                <label for="mc_jf_supp" class="control-label">支持积分</label>
+                <select name="mc_jf_supp" class="form-control margin-bottom-15" id="mc_jf_supp">
+                    <option value="1">支持</option>
+                    <option value="0">不支持</option>
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mc_jf_a_r" class="control-label">积分累积规则（元／积分）</label>
+                <input type="text" class="form-control" id="mc_jf_a_r" placeholder="如1/1，代表1个积分1元钱">
+            </div>
+            <div class="col-md-6 margin-bottom-15">
+                <label for="mc_jf_c_r" class="control-label">积分消费规则（积分／元）</label>
+                <input type="text" class="form-control" id="mc_jf_c_r" placeholder="如100/3，代表100个积分抵3元">
+            </div>
+        </div>
+        <div class="has-success has-feedback row_inner">
+            <div class="row">
+                <div class="col-md-12 margin-bottom-15">
+                    <label for="proj_config" class="control-label">说明</label><br/>
+                    <span>管理积分累加与积分消费的具体规则</span><br/>
+                    <hr>
+                    <span>备注：设定格式如（100/3）</span>
+                </div>
+            </div>
+        </div>
+        <div class="row templatemo-form-buttons">
+            <div class="col-md-12">
+                <button id="do_set_jf_r" class="btn btn-primary">提交</button>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{{sp}/js/jquery-2.1.1.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/bootstrap.min.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/plugins/metisMenu/jquery.metisMenu.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/plugins/slimscroll/jquery.slimscroll.min.js(sp=${pub_bucket})}"></script>
+
+    <!-- Custom and plugin javascript -->
+    <script th:src="@{{sp}/js/inspinia.js(sp=${pub_bucket})}"></script>
+    <script th:src="@{{sp}/js/plugins/pace/pace.min.js(sp=${pub_bucket})}"></script>
+    
+    <script th:src="@{{sp}/third/layer3/layer.js(sp=${pub_bucket})}" type="text/javascript"></script>
+   
+    <script>
+        $(document).ready(function() {
+
+            $('#loading-example-btn').click(function() {
+                btn = $(this);
+                simpleLoad(btn, true)
+
+                // Ajax example
+                //                $.ajax().always(function () {
+                //                    simpleLoad($(this), false)
+                //                });
+
+                simpleLoad(btn, false)
+            });
+        });
+
+        function simpleLoad(btn, state) {
+            if (state) {
+                btn.children().addClass('fa-spin');
+                btn.contents().last().replaceWith(" Loading");
+            } else {
+                setTimeout(function() {
+                    btn.children().removeClass('fa-spin');
+                    btn.contents().last().replaceWith(" Refresh");
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+
+<script type="text/javascript">
+$(function() {
+    var post_err_msg = "[[${error_msg}]]";
+    if(post_err_msg){
+        layer.msg(post_err_msg, {icon: 2}); 
+    }
+    var project_map = [];
+    var url = "[[${contextPath}]]/common/project_list/?" + Date.parse(new Date());
+    $.post(url, {}, function(data){
+    	if(data.available) {
+    		project_map = data.obj;
+    	}else {
+            var code = data.messages[0];
+            layer.msg(code, {
+                icon : 2
+            });
+        }
+    });
+    
+    $(".do_set_hierarchy").on("click", function() {
+        location.href = '[[${contextPath}]]/hierarchy/list?mc_id=' + $(this).attr("value") + "&ts="+ Date.parse(new Date());
+    });
+    
+    var bid = "";
+
+    $(".add_member").on("click", function(){
+        $("#mcr_type").attr("disabled",false);
+        $("#mcr_outer_type").attr("disabled",false);
+        $("#mcr_mcflk").attr("disabled",false);
+        
+         var type =$("#mcr_outer_type").val()
+         if (type == "0") {
+              $("#outer_mc").attr("style","display:none");
+         } else {
+              $("#outer_mc").attr("style","");
+         }
+        
+         layer.open({
+             area : [ '500px', '550px' ],
+             type : 1,
+             content : $("#templatemo-preferences-form")
+         });
+    });
+    
+    
+    $("#do_save_mcr").on("click", function(){
+        var mcr_title = $("#mcr_title").val();
+        var mcr_info = $("#mcr_info").val();
+        var mcr_mcflk = $("#mcr_mcflk").val();        
+        var mcr_level = $("#mcr_level").val();
+        var mcr_outer_type = $("#mcr_outer_type").val();  
+        var mcr_supp_jf = $("#mcr_supp_jf").val();
+        
+        var outer_pc_num = $("#update_outer_pc_num").val();
+        var outer_uri = $("#update_outer_uri").val();
+        var outer_pc_key = $("#update_outer_pc_key").val();
+        
+        if(mcr_title==""||mcr_title==null) {
+            layer.msg("请输入规则名称", {icon: 2});
+            return;
+        }
+        if(mcr_info==""||mcr_info==null) {
+            layer.msg("请输入规则说明", {icon: 2});
+            return;
+        }
+        if(mcr_mcflk!="1000") {
+            mcr_type = null;
+        }
+        
+        var index = layer.load();
+        var url = "[[${contextPath}]]" + "/add";
+        $.post(url, {outer_pc_key:outer_pc_key,outer_uri:outer_uri,outer_pc_num:outer_pc_num,mcr_title:mcr_title,mcr_info:mcr_info,
+            mcr_mcflk:mcr_mcflk,mcr_level:mcr_level,mcr_supp_jf:mcr_supp_jf,mcr_outer_type:mcr_outer_type}, function(data){
+            layer.close(index);
+            if(data.available) {
+                layer.alert('操作成功', {
+                    skin: 'layui-layer-lan',
+                    shift: 4 //动画类型
+                }, function(){
+                    location.reload();
+                });
+            } else {
+                var code = data.messages[0];
+                var msg = code;
+                if(code=="input_param_error") {
+                    msg = "输入参数错误";
+                } else if(code=="common_object_not_found") {
+                    msg = "会员卡规则未找到";
+                } else if(code=="unsupport_operatioin") {
+                    msg = "不支持的会员卡类型";
+                }
+                layer.msg(msg, {
+                    shift : 6
+                });
+            }
+        });
+    });
+ 
+    
+    $(".do_edit").on("click", function(){
+        bid = $(this).attr("value");  //取出当前的a标签的value值
+        var url = "[[${contextPath}]]" + "/getItem";
+        $.post(url, {bid:bid}, function(data){
+            if(data!=""||data!=null) {
+                $("#mcr_title_update").val(data.obj.title);           
+                $("#mcr_info_update").val(data.obj.info);
+                $("#mcr_outer_type_update").val(data.obj.outer_type);  
+                $("#mcr_supp_jf_update").val(data.obj.supp_jf);
+                
+                $("#update_outer_pc_num").val(data.obj.outer_pc_num);
+                $("#update_outer_uri").val(data.obj.outer_uri);
+                $("#update_outer_pc_key").val(data.obj.outer_pc_key);
+                $("#mcr_outer_type_update").attr("disabled","disabled");
+                var type =$("#mcr_outer_type_update").val()
+                if (type == "0") {
+                     $("#update_outer_mc").attr("style","display:none");
+                } else {
+                     $("#update_outer_mc").attr("style","");
+                }
+            }else{
+                
+            }
+        });
+        
+        
+         $("#mcr_type_update").attr("disabled",false);
+         $("#mcr_outer_type_update").attr("disabled",false);
+         $("#mcr_mcflk_update").attr("disabled",false);
+          layer.open({
+              area : [ '500px', '550px' ],
+              type : 1,
+              content : $("#templatemo-preferences-update")
+          }); 
+    }); 
+    
+    $("#do_save_mcr_update").on("click", function(){
+        var mcr_title_update = $("#mcr_title_update").val();
+        var mcr_info_update = $("#mcr_info_update").val();
+        var mcr_outer_type_update = $("#mcr_outer_type_update").val();  
+        var mcr_supp_jf_update = $("#mcr_supp_jf_update").val();
+        
+        var outer_pc_num = $("#update_outer_pc_num").val();
+        var outer_uri = $("#update_outer_uri").val();
+        var outer_pc_key = $("#update_outer_pc_key").val();
+        
+       
+        
+        if(mcr_title_update==""||mcr_title_update==null) {
+            layer.msg("请输入规则名称", {icon: 2});
+            return;
+        }
+        if(mcr_info_update==""||mcr_info_update==null) {
+            layer.msg("请输入规则说明", {icon: 2});
+            return;
+        }
+        
+        var index = layer.load();
+        var url = "[[${contextPath}]]" + "/update";
+        $.post(url, {outer_pc_key:outer_pc_key,outer_uri:outer_uri,outer_pc_num:outer_pc_num,outer_pc_key:outer_pc_key,outer_pc_num:outer_pc_num,outer_uri:outer_uri,bid:bid,mcr_title:mcr_title_update,mcr_info:mcr_info_update,mcr_supp_jf:mcr_supp_jf_update,mcr_outer_type:mcr_outer_type_update}, function(data){
+            layer.close(index);
+            if(data.available) {
+                layer.alert('更新成功', {
+                    skin: 'layui-layer-lan',
+                    shift: 4 //动画类型
+                }, function(){
+                    location.reload();
+                });
+            } else {
+                var code = data.messages[0];
+                layer.msg(code, {
+                    shift : 6
+                });
+            }
+        });
+    });
+ 
+    $(".do_bind_store").on("click", function() {
+        var mc_id = $(this).attr("value");//门店id
+        var html = "<div class=\"tab-pane fade in active\" id=\func_" + mc_id + "\">";
+        html = html + "<ul class=\"list-group\">";
+        $.each(project_map, function (key, value) {
+            var tmp_obj = value;
+            html = html + "<li class=\"list-group-item\">";
+            var class_name = "choose_store_checkbox";
+            if(tmp_obj.id=="0") {
+                class_name = class_name + " choose_all_store";
+            }
+            html = html + "<input name='s_store' type=\"radio\" value=\"" + tmp_obj.id + "\" class=\"" + class_name + "\"";
+            html = html + "/> " + tmp_obj.proj_name;
+        }); 
+        html = html + "</ul>";
+        html = html + "</div>";
+        $(".tab-content").html(html);
+        layer.open({
+            area : ['500px', '500px'],
+            type : 1,
+            content : $("#check_box_list")
+        });
+       
+        $(".choose_store_checkbox").on("click", function(){
+            var id = $(this).val();
+            url = "[[${contextPath}]]" +"/bind_store/?" + Date.parse(new Date());
+            var index = layer.load();
+            $.post(url, {mc_id:mc_id,s_id:id}, function(data) {
+                layer.close(index);
+                if(data.available) {
+                    layer.alert('操作成功', {
+                        skin: 'layui-layer-lan',
+                        shift: 4 //动画类型
+                    }, function(){
+                        location.reload();                          
+                    });
+                } else {
+                    var code = data.messages[0];
+                    layer.msg(code, {
+                        shift : 6
+                    });
+                }
+            });
+        });
+    });
+
+    $("#mcr_outer_type").click(function(){
+    	var type =$(this).val()
+    	if (type == "0") {
+    		 $("#outer_mc").attr("style","display:none");
+    	} else {
+    		 $("#outer_mc").attr("style","");
+    	}
+    });
+    
+    
+    $("#mcr_outer_type_update").click(function(){
+        var type =$(this).val()
+        if (type == "0") {
+             $("#update_outer_mc").attr("style","display:none");
+        } else {
+             $("#update_outer_mc").attr("style","");
+        }
+    });
+    
+    
+    
+    
+});
+
+var modi_jf_id = "";
+
+/*积分设置*/
+$(".modify_jf_radio").on("click", function() {
+    modi_jf_id = $(this).attr("value");  //取出当前的a标签的value值
+    var url = "[[${contextPath}]]" + "/getItem";
+    $.post(url, {bid:modi_jf_id}, function(data){
+        if(data!=""||data!=null) {
+            $("#mc_jf_supp").val(data.obj.supp_jf);           
+            $("#mc_jf_a_r").val(data.obj.mc_jf_supp);
+            $("#mc_jf_c_r").val(data.obj.mc_jf_c_r);       
+        }else{
+            $("#mc_jf_supp").val("");             
+            $("#mc_jf_a_r").val("");
+            $("#mc_jf_c_r").val("");
+        }
+    });
+    //modi_jf_id = $(this).attr("attr_id");
+    layer.open({
+        area : [ '500px', '400px' ],
+        type : 1,
+        content : $("#templatemo-preferences-form-4")
+    });
+});
+// 保存积分限制
+$("#do_set_jf_r").on("click", function() {
+    var mc_jf_supp = $("#mc_jf_supp").val();
+    var mc_jf_a_r = $("#mc_jf_a_r").val();
+    var mc_jf_c_r = $("#mc_jf_c_r").val();
+    if(modi_jf_id<=0) {
+        layer.msg("请选择要设定卡号的会员卡规则项", {icon: 2});
+        return;
+    }
+    if(mc_jf_a_r==null||mc_jf_a_r==""||mc_jf_c_r==null||mc_jf_c_r=="") {
+        layer.msg("参数不能为空", {icon: 2});
+        return;
+    }
+    var url = "[[${contextPath}]]" + "/set_jf_r";
+    var index = layer.load();
+    $.post(url, {mc_id:modi_jf_id,mc_jf_supp:mc_jf_supp,mc_jf_a_r:mc_jf_a_r,mc_jf_c_r:mc_jf_c_r}, function(data) {
+        layer.close(index);
+        if(data.available) {
+            layer.alert('操作成功', {
+                skin: 'layui-layer-lan',
+                shift: 4 //动画类型
+            }, function(){
+                location.reload();
+            });
+        } else {
+            var code = data.messages[0];
+            var msg = code;
+            if(code=="input_param_error") {
+                msg = "输入参数错误";
+            } else if(code=="common_object_not_found") {
+                msg = "会员卡规则未找到";
+            } else if(code=="unsupport_operatioin") {
+                msg = "不支持的会员卡类型";
+            }
+            layer.msg(msg, {
+                shift : 2
+            });
+        }
+    });
+});
+
+$(".switch_s").on("click", function() {
+    var s_sid = $(this).attr("value");
+    var url = "[[${contextPath}]]" + "/update_run_operate";
+    var index = layer.load();
+    $.post(url, {mc_id:s_sid}, function(data) {
+            layer.close(index);
+            if(data.available) {
+                layer.alert('操作成功', {
+                    skin: 'layui-layer-lan',
+                    shift: 4 //动画类型
+                }, function(){
+                    location.reload();
+                });
+            } else {
+                var code = data.messages[0];
+                layer.msg(code, {
+                    shift : 2
+                });
+            }
+        });
+});
+
+// 设置发卡规则
+var cn_r_id = "";
+$(".do_set_hp_rule").on("click", function() {
+    cn_r_id = $(this).attr("value");
+    $("#mc_start_cn").val("");
+    $("#mc_end_cn").val("");
+    
+    var mc_start_cn = $(this).attr("mc_start_cn");
+    var mc_end_cn = $(this).attr("mc_end_cn");
+    var mc_prefix = $(this).attr("mc_prefix");
+    var mc_h_prefix = $(this).attr("mc_h_prefix");
+    
+    $("#mc_start_cn").val(mc_start_cn);
+    $("#mc_end_cn").val(mc_end_cn);
+    $("#mc_prefix").val(mc_prefix);
+    $("#mc_h_prefix").val(mc_h_prefix);
+    if(mc_start_cn!=null&&mc_start_cn!=""&&mc_end_cn!=null&&mc_end_cn!="") {
+        $("#do_set_cn_rule").attr("disabled",true);
+    }else{
+        $("#do_set_cn_rule").attr("disabled",false);
+    } 
+    layer.open({
+        area : [ '450px', '365px' ],
+        type : 1,
+        content : $("#templatemo-preferences-form-3")
+    });
+});
+
+$("#do_set_cn_rule").on("click", function() {
+    if(cn_r_id<=0) {
+        layer.msg("请选择要设定卡号的会员卡规则项", {icon: 2});
+        return;
+    }
+    var mc_h_prefix = $("#mc_h_prefix").val();
+    var mc_prefix = $("#mc_prefix").val();
+    var mc_start_cn = $("#mc_start_cn").val();
+    var mc_end_cn = $("#mc_end_cn").val();
+    if(mc_start_cn==null||mc_start_cn.trim()==""||mc_end_cn==null||mc_end_cn.trim()=="") {
+        layer.msg("请选择要设定卡号的会员卡规则项", {icon: 2});
+        return;
+    }
+    if(!(/^\d+$/.test(mc_start_cn))||!(/^\d+$/.test(mc_end_cn))){
+        layer.msg("请输入正确格式的数字", {icon: 2});
+        return;
+    }
+    var url = "[[${contextPath}]]" + "/set_cn_rule";
+    var index = layer.load();
+    $.post(url, {mc_id:cn_r_id,a_mc_prefix:mc_prefix,a_mch_prefix:mc_h_prefix,s_cn:mc_start_cn,e_cn:mc_end_cn}, function(data) {
+        layer.close(index);
+        if(data.available) {
+            layer.alert('操作成功', {
+                skin: 'layui-layer-lan',
+                shift: 4 //动画类型
+            }, function(){
+                location.reload();
+            });
+        } else {
+            var code = data.messages[0];
+            layer.msg(code, {
+                icon : 2
+            });
+        }
+    });
+});
+
+var prefix_id = "";
+$(".set_prefix").on("click", function() {
+    prefix_id = $(this).attr("value");
+    var prefix = $(this).attr("prefix");
+    $("#mcr_prefix").val(prefix);
+    layer.open({
+        area : [ '350px', '350px' ],
+        type : 1,
+        content : $("#templatemo-preferences-form-2")
+    });
+});
+$("#do_set_prefix").on("click", function() {
+    if(prefix_id<=0) {
+        layer.msg("请选择您要设置的规则", {icon: 2});
+        return;
+    }
+    var prefix = $("#mcr_prefix").val();
+    if(prefix==null||prefix.trim()=="") {
+        layer.msg("请选择您要设置的规则", {icon: 2});
+        return;
+    }
+    var url = "[[${contextPath}]]" + "/set_prefix";
+    var index = layer.load();
+    $.post(url, {mc_id:prefix_id,prefix:prefix}, function(data) {
+        layer.close(index);
+        if(data.available) {
+            $("#set_prefix_" + prefix_id).html(prefix);
+            layer.alert('操作成功', {
+                skin: 'layui-layer-lan',
+                shift: 4 //动画类型
+            }, function(){
+                location.reload();
+            });
+        } else {
+            var code = data.messages[0];
+            var msg = "未知错误";
+            if(code=="input_param_error") {
+                msg = "请检查输入参数";
+            } else if(code=="common_object_not_found") {
+                msg = "规则未找到";
+            } else if(code=="object_belong_error") {
+                msg = "规则归属错误";
+            } else if(code=="unsupport_operatioin") {
+                msg = "前缀不可重复设定";
+            } else if(code=="status_invalid") {
+                msg = "外部规则不可设置";
+            } else if(code=="object_repeat") {
+                msg = "前缀重复";
+            }
+            layer.msg(msg, {
+                icon : 2
+            });
+        }
+    });
+});
+
+</script>
+
+</html>

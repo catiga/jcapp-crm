@@ -1,0 +1,193 @@
+package com.jeancoder.crm.entry.api.member
+
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
+import com.jeancoder.app.sdk.JC
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.app.sdk.source.RequestSource
+import com.jeancoder.core.http.JCRequest
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.core.power.CommunicationParam
+import com.jeancoder.core.result.Result
+import com.jeancoder.crm.ready.common.AvailabilityStatus
+import com.jeancoder.crm.ready.constant.JsConstants
+import com.jeancoder.crm.ready.constant.McConstants
+import com.jeancoder.crm.ready.constant.SimpleAjax
+import com.jeancoder.crm.ready.dto.order.OrderMcDto
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.entity.McPreOrderInfo
+import com.jeancoder.crm.ready.entity.McPreOrderItem
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.OrderMc
+import com.jeancoder.crm.ready.exception.McrException
+import com.jeancoder.crm.ready.idream.DPCODE
+import com.jeancoder.crm.ready.idream.DreamProtocol
+import com.jeancoder.crm.ready.idream.SecuritySandbox
+import com.jeancoder.crm.ready.service.AccountProjectMcService
+import com.jeancoder.crm.ready.service.MemberCardHierarchyService
+import com.jeancoder.crm.ready.service.OrderMcService
+import com.jeancoder.crm.ready.service.PreMoService
+import com.jeancoder.crm.ready.util.DataUtils
+import com.jeancoder.crm.ready.util.JackSonBeanMapper
+import com.jeancoder.crm.ready.util.MD5Util
+import com.jeancoder.crm.ready.util.RemoteUtil
+import com.jeancoder.crm.ready.util.StringUtil
+
+
+/**
+ * 创建会员资料， 并创建订单
+ */
+JCRequest request = RequestSource.getRequest();
+JCLogger Logger = LoggerSource.getLogger(this.getClass().getName());
+Result result = new Result();
+try {
+	def pid = RemoteUtil.getProj().id;
+	//String card_code = request.getParameter("card_code");// 卡号
+	String mc_name = request.getParameter("mc_name");//会员姓名
+	String mc_mobile = request.getParameter("mc_mobile");//会员手机号
+	String mc_code = request.getParameter('mc_code');
+	String id_card = request.getParameter("id_card");// 身份证号码
+	String pwd = request.getParameter("pwd");// 密码
+	String pre_id = request.getParameter("pre_id");//  getMcNum 接口 会返回一个对象， 对象里面有id
+	//String h_id = request.getParameter("h_id");
+	
+	if(mc_code!='989910') {
+		//调用创梦登录接口
+		DreamProtocol dpinst = new SecuritySandbox();
+		DPCODE ret_code = dpinst.login(mc_mobile, mc_code);
+		if(ret_code.code!=0) {
+			println 'fail' + ret_code.code + ',' + ret_code.desc;
+			return AvailabilityStatus.notAvailable('登录失败，验证码已失效' + ret_code.code);
+		}
+	}
+	
+	// 获取门店 项目信息
+	SimpleAjax ret_result = JC.internal.call(SimpleAjax, 'trade', '/incall/cashier/token_validate', ['token':request.getAttribute("token_str"), domain:request.getServerName()]);
+	if(ret_result==null) {
+		return AvailabilityStatus.notAvailable(['trade_server_error','请检查交易服务']);
+	}
+	if(!ret_result.available) {
+		return ret_result;
+	}
+	if(ret_result.data[0]==null) {
+		return AvailabilityStatus.notAvailable(['counter_set_error','请绑定收银台的门店信息']);
+	}
+	
+	def sid = ret_result.data[0]['sid'];
+	def sname = ret_result.data[0]['sname'];
+	def log_id = ret_result.data[2]['id'];
+	
+	pwd = StringUtil.trim(pwd);
+	if (StringUtil.isEmpty(pre_id) || StringUtil.isEmpty(mc_name) || StringUtil.isEmpty(mc_mobile) || StringUtil.isEmpty(id_card)|| StringUtil.isEmpty(pwd)) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.input_param_empty, "参数不能为空"] as String[]));
+	}
+	
+	println "___ " + getEncoding(mc_name);
+	mc_name = URLDecoder.decode(mc_name);
+	mc_name = URLDecoder.decode(mc_name);
+	println mc_name;
+	//判断手机号是否合法
+	Pattern p = java.util.regex.Pattern.compile(/^1[34578][0-9]{9}$/);
+	Matcher matcher = p.matcher(mc_mobile);
+	if(!matcher.matches()){
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.input_param_error, "手机号格式错误"] as String[] ));
+	}
+	//判断身份证号是否合法
+	p = java.util.regex.Pattern.compile(/^\d{17}[0-9Xx]$|^\d{15}$/);
+	 matcher = p.matcher(id_card);
+	if(!matcher.matches()){
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.input_param_error,"身份证格式错误"] as String[]));
+	}
+	
+	// 检查手机是否已经对应的有会员卡
+	List<AccountProjectMC> all_mchs = AccountProjectMcService.INSTANSE.get_mcs_by_mobile(mc_mobile);
+	if(all_mchs!=null&&!all_mchs.isEmpty()) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.object_repeat, "手机号已经注册会员"] as String[]));
+	}
+	
+	//card_code = AccountProjectMCUtil.getMcNum(card_code);
+	if (!DataUtils.isNumber(pwd) || pwd.length() != 6) {
+		return result.setData(AvailabilityStatus.notAvailable( [JsConstants.password_format_error, "密码格式错误"] as String[]));
+	}
+	pwd = MD5Util.getMD5(pwd);
+	
+	McPreOrderItem item = PreMoService._instance_.getItem(new BigInteger(pre_id));
+	McPreOrderInfo info = PreMoService._instance_.getInfo(item.order_id);
+	
+	def card_code = item.cards_identifier;
+	def h_id = info.mch_id;
+	// 检查会员等级 会员规则
+	MemberCardHierarchy mch = MemberCardHierarchyService.INSTANSE.getItem(h_id);
+	if (mch == null || !pid.toString().equals(mch.mcRule.pid.toString())) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.object_repeat, "会员等级未找到"] as String[]));
+	}
+	
+	//println "mcr_status_" + mch.mcRule.mcr_status
+	if (!McConstants.point_rule_status_start.equals(mch.mcRule.mcr_status)) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.object_repeat, "当前等级批次已停止使用"] as String[]));
+	}
+	
+	OrderMc orderMc = OrderMcService.INSTANSE.admin_create_order(card_code, mch,pid,new BigInteger(sid),sname,new BigInteger(pre_id) ,mc_name,mc_mobile,id_card,pwd, RemoteUtil.getAuthToken());
+	OrderMcDto orderDto = new OrderMcDto();
+	orderDto.order_no = orderMc.order_no;
+	orderDto.total_amount = orderMc.total_amount;
+	orderDto.pay_amount = orderMc.pay_amount;
+	orderDto.o_c = orderMc.o_c;
+	orderDto.ops = orderMc.ops;
+	orderDto.card_no = orderMc.card_no;
+	def order_data = JackSonBeanMapper.toJson(orderDto);
+	order_data = URLEncoder.encode(order_data);
+	order_data = URLEncoder.encode(order_data);
+	List<CommunicationParam> params = new ArrayList<CommunicationParam>();
+	params.add(new CommunicationParam("oc", "8000"));
+	params.add(new CommunicationParam("od",order_data));
+	params.add(new CommunicationParam("log_id",log_id.toString()));
+	//开始去交易中心注册订单
+	def trade = RemoteUtil.connect(SimpleAjax.class, "trade", "/incall/create_trade", params);
+	println " trade rules : " + JackSonBeanMapper.toJson(trade);
+	return result.setData(AvailabilityStatus.available(trade));
+} catch (McrException e) {
+	return result.setData(AvailabilityStatus.notAvailable(e.getMessage()));
+}catch (Exception e) {
+	Logger.error("创建会员卡失败", e);
+	return result.setData(AvailabilityStatus.notAvailable(JsConstants.unknown));
+}
+
+
+
+public static String getEncoding(String str) {
+	String encode = "GB2312";
+   try {
+	   if (str.equals(new String(str.getBytes(encode), encode))) {      //判断是不是GB2312
+			String s = encode;
+		   return s;      //是的话，返回“GB2312“，以下代码同理
+		}
+	} catch (Exception exception) {
+	}
+	encode = "ISO-8859-1";
+   try {
+	   if (str.equals(new String(str.getBytes(encode), encode))) {      //判断是不是ISO-8859-1
+			String s1 = encode;
+		   return s1;
+		}
+	} catch (Exception exception1) {
+	}
+	encode = "UTF-8";
+   try {
+	   if (str.equals(new String(str.getBytes(encode), encode))) {   //判断是不是UTF-8
+			String s2 = encode;
+		   return s2;
+		}
+	} catch (Exception exception2) {
+	}
+	encode = "GBK";
+   try {
+	   if (str.equals(new String(str.getBytes(encode), encode))) {      //判断是不是GBK
+			String s3 = encode;
+		   return s3;
+		}
+	} catch (Exception exception3) {
+	}
+   return "";  
+}

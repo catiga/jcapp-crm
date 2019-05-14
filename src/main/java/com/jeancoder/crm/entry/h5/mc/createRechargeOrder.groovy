@@ -1,0 +1,114 @@
+package com.jeancoder.crm.entry.h5.mc
+
+import com.jeancoder.app.sdk.JC
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.core.result.Result
+import com.jeancoder.crm.ready.common.AvailabilityStatus
+import com.jeancoder.crm.ready.constant.JsConstants
+import com.jeancoder.crm.ready.constant.SimpleAjax
+import com.jeancoder.crm.ready.dto.StoreInfoDto
+import com.jeancoder.crm.ready.dto.mc.McHierchHiDto
+import com.jeancoder.crm.ready.dto.order.McRechargeOrderDto
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.OrderRechargeMc
+import com.jeancoder.crm.ready.mcbridge.MCFactory
+import com.jeancoder.crm.ready.mcbridge.ret.MCardLevelRet
+import com.jeancoder.crm.ready.service.AccountProjectMcService
+import com.jeancoder.crm.ready.service.MemberCardHierarchyService
+import com.jeancoder.crm.ready.service.OrderRechargeService
+import com.jeancoder.crm.ready.util.DataUtils
+import com.jeancoder.crm.ready.util.GlobalHolder
+import com.jeancoder.crm.ready.util.JackSonBeanMapper
+import com.jeancoder.crm.ready.util.StringUtil
+
+/**
+ * 创建充值订单
+ */
+JCLogger Logger = LoggerSource.getLogger(this.getClass().getName());
+Result result = new Result();
+try {
+	def pid = GlobalHolder.proj.id;
+	String mc_num = JC.request.param("mc_num");//卡号
+	String mch_id = JC.request.param("h_id")//等级id
+	def sid = JC.request.param("sid")//门店id
+	def getpay = JC.request.param("getpay")//充值金额
+	StoreInfoDto store = null;
+	if(sid != null) {
+		store = JC.internal.call(StoreInfoDto, 'project', '/incall/store_by_id', ['id':sid]);	//h5获取门店不限制pid，所以不传pid
+	}
+	def sname = null;
+	if (store != null) {
+		sid = store.id;
+		sname = store.store_name;
+	}
+	if(sid == null) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.input_param_null,"请先选择门店再充值"] as String[]));
+	}
+	if (StringUtil.isEmpty(mc_num) || StringUtil.isEmpty(mch_id) ) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.input_param_null,"参数为空"] as String[]));
+	}
+	
+	MemberCardHierarchy mch = MemberCardHierarchyService.INSTANSE.getItem(new BigInteger(mch_id));
+	if (mch == null) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.object_not_exist, "等级未找到"] as String[]));
+	}
+	AccountProjectMC mc = AccountProjectMcService.INSTANSE.get_normal_mc_by_num(pid, mc_num);
+	if (mc == null ) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.object_not_exist, "会员卡未找到"] as String[]));
+	}
+
+	// 1 判断是否支持充值
+	if(!mch.supp_recharge.equals(1)){
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.not_supported_replenishment , "当前会员卡不支持充值"] as String[]));
+	}
+	if (!DataUtils.isNumber(mch.getpay)) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.sys_config_error,"配置错误"] as String[]));
+	}
+	// 2判断网售状态
+	if (!mch.flag.equals(0)) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.unknown,"该等级不支持网售"] as String[]));
+	}
+	def amount = mch.getpay;
+	if (!"0".equals(mch.mcRule.outer_type)) {
+		String c_id = null;
+		SimpleAjax ajax = JC.internal.call(SimpleAjax,"ticketingsys", "/store/cinema_by_id", [pid:pid,store_id:sid]);
+		if (ajax != null && ajax.isAvailable() && ajax.data != null && ajax.data.size() > 0) {
+			c_id = ajax.data.get(0).store_no;
+		}
+		def bring =  MCFactory.generate(mch.mcRule);
+		MCardLevelRet ret = bring.query_levels(c_id);
+		if (!ret.isSuccess()) {
+			return AvailabilityStatus.notAvailable(ret.rmCode + ":"+ret.rmMsg);
+		}
+		for (McHierchHiDto item : ret.dtolist) {
+			if (mch.h_num.equals(item.h_num)) {
+				amount = item.least_recharge;
+				break;
+			}
+		}
+	}
+	OrderRechargeMc order = OrderRechargeService.INSTANSE.create_mc_recharge_order(pid,sid,sname, mc,mch.id,amount, "",0,null);
+
+	McRechargeOrderDto dto = new McRechargeOrderDto(order);
+	def order_data = JackSonBeanMapper.toJson(order);
+	order_data = URLEncoder.encode(order_data);
+	order_data = URLEncoder.encode(order_data);
+	
+	/*
+	List<CommunicationParam> params = new ArrayList<CommunicationParam>();
+	params.add(new CommunicationParam("oc","8001"));
+	params.add(new CommunicationParam("od",order_data));
+	//开始去交易中心注册订单
+	SimpleAjax trade = RemoteUtil.connect(SimpleAjax.class, "trade", "/incall/create_trade", params);
+	println "trade__" + JackSonBeanMapper.toJson(trade);
+	*/
+	
+	SimpleAjax trade = JC.internal.call(SimpleAjax.class, 'trade', '/incall/create_trade', ['oc':'8001','od':order_data, pid:pid]);
+	
+	return result.setData(AvailabilityStatus.available(trade));
+} catch (Exception e) {
+	Logger.error("创建充值订单失败", e);
+	return result.setData(AvailabilityStatus.notAvailable([JsConstants.unknown,"创建充值订单失败"] as String[]));
+}

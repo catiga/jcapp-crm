@@ -1,0 +1,92 @@
+package com.jeancoder.crm.entry.h5.mc
+
+import com.jeancoder.app.sdk.JC
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.app.sdk.source.RequestSource
+import com.jeancoder.core.http.JCRequest
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.core.power.CommunicationParam
+import com.jeancoder.core.result.Result
+import com.jeancoder.crm.ready.common.AvailabilityStatus
+import com.jeancoder.crm.ready.constant.JsConstants
+import com.jeancoder.crm.ready.constant.SimpleAjax
+import com.jeancoder.crm.ready.dto.StoreInfoDto
+import com.jeancoder.crm.ready.dto.order.McRechargeOrderDto
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.OrderRechargeMc
+import com.jeancoder.crm.ready.service.AccountProjectMcService
+import com.jeancoder.crm.ready.service.MemberCardHierarchyService
+import com.jeancoder.crm.ready.service.OrderRechargeService
+import com.jeancoder.crm.ready.util.AccountProjectMCUtil
+import com.jeancoder.crm.ready.util.DataUtils
+import com.jeancoder.crm.ready.util.GlobalHolder
+import com.jeancoder.crm.ready.util.JackSonBeanMapper
+import com.jeancoder.crm.ready.util.MoneyUtil
+import com.jeancoder.crm.ready.util.RemoteUtil
+import com.jeancoder.crm.ready.util.StringUtil
+
+/**
+ * 创建充值订单
+ */
+JCRequest request = RequestSource.getRequest();
+JCLogger Logger = LoggerSource.getLogger(this.getClass().getName());
+Result result = new Result();
+try {
+	//	AuthToken token = RemoteUtil.getAuthToken();
+	//	AuthUser user = token==null?null:token.user;
+	def pid = RemoteUtil.getProj().id;
+	String mc_num = request.getParameter("mc_num");//卡号
+	String mch_id =request.getParameter("h_id")//等级id
+//	String apid = request.getParameter("apid")//等级id
+	def sid = request.getParameter("sid")//等级id
+	StoreInfoDto store = null;
+	if(sid != null) {
+		store = JC.internal.call(StoreInfoDto, 'project', '/incall/store_by_id', ['id':sid]);	//h5获取门店不限制pid，所以不传pid
+	}
+	def sname = null;
+	if (store != null) {
+		sid = store.id;
+		sname = store.store_name;
+	}
+	if (StringUtil.isEmpty(mc_num) || StringUtil.isEmpty(mch_id) ) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.input_param_null,"参数为空"] as String[]));
+	}
+	
+	MemberCardHierarchy mch = MemberCardHierarchyService.INSTANSE.getItem(new BigInteger(mch_id));
+	if (mch == null) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.object_not_exist, "等级未找到"] as String[]));
+	}
+	AccountProjectMC mc = AccountProjectMcService.INSTANSE.get_normal_mc_by_num(pid, mc_num);
+	if (mc == null ) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.object_not_exist, "会员卡未找到"] as String[]));
+	}
+
+	// 1 判断是否支持充值
+	if(!mch.supp_recharge.equals(1)){
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.not_supported_replenishment , "当前会员卡不支持充值"] as String[]));
+	}
+	if (!DataUtils.isNumber(mch.getpay)) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.sys_config_error,"配置错误"] as String[]));
+	}
+	// 2判断网售状态
+	if (!mch.flag.equals(0)) {
+		return result.setData(AvailabilityStatus.notAvailable([JsConstants.unknown,"该等级不支持网售"] as String[]));
+	}
+	OrderRechargeMc order = OrderRechargeService.INSTANSE.create_mc_recharge_order(pid,sid,sname, mc,mch.id,mch.getpay, "",0,null);
+
+	McRechargeOrderDto dto = new McRechargeOrderDto(order);
+	def order_data = JackSonBeanMapper.toJson(order);
+	order_data = URLEncoder.encode(order_data);
+	order_data = URLEncoder.encode(order_data);
+	List<CommunicationParam> params = new ArrayList<CommunicationParam>();
+	params.add(new CommunicationParam("oc","8001"));
+	params.add(new CommunicationParam("od",order_data));
+	//开始去交易中心注册订单
+	SimpleAjax trade = RemoteUtil.connect(SimpleAjax.class, "trade", "/incall/create_trade", params);
+	println "trade__" + JackSonBeanMapper.toJson(trade);
+	return result.setData(AvailabilityStatus.available(trade));
+} catch (Exception e) {
+	Logger.error("创建充值订单失败", e);
+	return result.setData(AvailabilityStatus.notAvailable([JsConstants.unknown,"创建充值订单失败"] as String[]));
+}

@@ -1,0 +1,30 @@
+package com.jeancoder.crm.ready.mcbridge
+
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.entity.CommonOrder
+import com.jeancoder.crm.ready.entity.MemberCardRule
+import com.jeancoder.crm.ready.mcbridge.dto.MCAuthFix
+
+public interface MCBring {
+	
+	//计算订单会员价格
+	//public MCPrice compute_mc_price(CommonOrder deduction, AccountProjectMC mct);
+	public def compute_mc_price(def order, def mct);
+	
+	//校验会员卡权限
+	public def auth_mc(def mc_rule, String c_id, String mc_num, String mc_pwd, def auth_fix);
+	
+	//查询会员卡详情
+	public def get_detail(def mc_rule, String c_id, String mc_num, def fix);
+	
+	//使用会员卡完成付款
+	//public MCRet pay_with_mc(CommonOrder deduction, AccountProjectMC mct);
+	public def pay_with_mc(def order, def mct);
+	
+	//会员卡充值
+	public def mc_recharge(def mct, String recharge_amount, String pay_amount, String serial_num);
+	
+	public void drawback(String amount,Long apmcid);
+	
+	public boolean deductions(String amount,Long apmcid);
+}

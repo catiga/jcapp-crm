@@ -1,0 +1,27 @@
+package com.jeancoder.crm.ready.dto.order
+
+class OrderMcDto {
+	
+	BigInteger id;
+	
+	String order_no;
+	
+	String total_amount;
+	
+	String pay_amount;
+	
+	String o_c;//8000
+	
+	String init_pwd;
+	
+	String ops;
+	String card_no;
+	
+	String pay_time;
+	String pay_type;
+
+	BigInteger puid;
+	String puname;
+
+	
+}

@@ -1,0 +1,592 @@
+package com.jeancoder.crm.ready.service
+
+import java.sql.Timestamp
+import java.util.Date
+import java.util.List
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
+import com.jeancoder.app.sdk.source.LoggerSource
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.crm.ready.common.AccountProjectMCStatus
+import com.jeancoder.crm.ready.common.AvailabilityStatus
+import com.jeancoder.crm.ready.constant.JsConstants
+import com.jeancoder.crm.ready.constant.McConstants
+import com.jeancoder.crm.ready.dao.AccountProjectMcDao
+import com.jeancoder.crm.ready.dto.mc.AccountMcDto
+import com.jeancoder.crm.ready.entity.AccountProjectMC
+import com.jeancoder.crm.ready.entity.GeneralUser
+import com.jeancoder.crm.ready.entity.McPreOrderInfo
+import com.jeancoder.crm.ready.entity.McPreOrderItem
+import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.MemberCardRule
+import com.jeancoder.crm.ready.entity.OrderMc
+import com.jeancoder.crm.ready.exceptio.ObjectExistExceptio
+import com.jeancoder.crm.ready.exception.McrException
+import com.jeancoder.crm.ready.util.DataUtils
+import com.jeancoder.crm.ready.util.StringUtil
+import com.jeancoder.jdbc.JcPage
+import com.jeancoder.jdbc.JcTemplate
+import com.milepai.core.utils.data.DateUtil
+
+class AccountProjectMcService {
+
+	static final AccountProjectMcService INSTANSE = new AccountProjectMcService();
+	private static final JcTemplate jcTemplate = JcTemplate.INSTANCE();
+	JCLogger Logger = LoggerSource.getLogger(this.getClass().getName());
+	
+	/**
+	 * 更新会员卡资料
+	 * @return
+	 */
+	public AccountProjectMC update_account_project(AccountProjectMC apm) {
+		AccountProjectMC item = getItem(apm.id);
+		if (item == null) {
+			return null;
+		}
+		item.mc_name = apm.mc_name;
+		item.mc_mobile = apm.mc_mobile;
+		item.id_card = apm.id_card;
+		item.mc_pwd = apm.mc_pwd;
+		item.c_time = new Timestamp(new Date().getTime());
+		def id = jcTemplate.update(item);
+		return item;
+	}
+	
+
+	/**
+	 * 通过手机号和身份证号码模糊查询会员卡
+	 * @return
+	 */
+	public JcPage<AccountProjectMC> getPageByLike(JcPage<AccountProjectMC> page, BigInteger pid, String like) {
+		return AccountProjectMcDao.INSTANSE.getPageByLike(page, pid, like);
+	}
+
+	/**
+	 * 通过手机号或会员卡号精确查询
+	 * @return
+	 */
+	public List<AccountProjectMC> queryByMobileOrCard(BigInteger pid, String query_key) {
+		return AccountProjectMcDao.INSTANSE.queryByMobileOrCard( pid, query_key);
+	}
+
+ 
+	public List<AccountProjectMC> queryByMobile(BigInteger pid, String query_key) {
+		return AccountProjectMcDao.INSTANSE.queryByMobile( pid, query_key);
+	}
+
+	/**
+	 * 根据id 返回会员卡资料
+	 * @return
+	 */
+	public AccountProjectMC getItem(BigInteger id) {
+		String sql = "select * from AccountProjectMC where id=? and flag!=?";
+		return jcTemplate.get(AccountProjectMC.class, sql, id, -1);
+	}
+
+	public AccountProjectMC getItembymchid(BigInteger mch_id) {
+		String sql = "select * from AccountProjectMC where mch_id=? and flag!=?";
+		return jcTemplate.get(AccountProjectMC.class, sql, mch_id, -1);
+	}
+	/**
+	 * 根据手机号查看会员该会员是否拥有唯一的会员卡
+	 * @param mobile
+	 * @return
+	 */
+
+	public boolean getsum(String mobile) {
+		String sql = "select * from AccountProjectMC where mc_mobile=? and flag!=-1"
+		AccountProjectMC apmc = jcTemplate.INSTANCE.get(AccountProjectMC.class, sql, mobile);
+		if(apmc==null){
+			return false;
+		}
+		return true;
+	}
+	public List<AccountProjectMC> get_mc_by_rule_and_num(MemberCardRule rule, String mc_num) {
+		String hql = "select m.* from AccountProjectMC m , mm_member_card_hierarchy mch where m.flag!=? and m.mch_id=mch.id and mch.mc_id =? and m.mc_num=?";
+		List<AccountProjectMC> result = jcTemplate.find(AccountProjectMC.class, hql, -1, rule.getId(), mc_num);
+		return result;
+	}
+
+
+
+
+	public List<AccountProjectMC> get_all_account_mc(def pid, def basic_id) {
+		String hql = "select a.* from AccountProjectMC a where a.flag!=? and a.basic_id=? and a.pid =?";
+		List<AccountProjectMC> result = jcTemplate.find(AccountProjectMC,hql, -1,basic_id,pid);
+		return result;
+	}
+
+
+
+
+	/**
+	 * 收银台发卡 发预支实体卡
+	 * @param project
+	 * @param mch 等级
+	 * @param mc_mobile 手机号
+	 * @param check_mc_pwd 密码
+	 * @param gift_balance 
+	 * @return
+	 */
+	public AccountProjectMC admin_pub_card_by_rule(AccountProjectMC accpunt, BigInteger pid,AccountProjectMC apmc, MemberCardHierarchy mch,String mc_mobile, String check_mc_pwd, String gift_balance) {
+		//首先判断会员卡规则状态
+		if(!McConstants.mcr_status_normal.equals(mch.mcRule.mcr_status)) {
+			throw new McrException(JsConstants.unsupport_operatioin);
+		}
+		if(!DataUtils.isNumber(gift_balance)) {
+			gift_balance = "0";
+		}
+		apmc.balance = gift_balance;
+		apmc.mc_pwd = check_mc_pwd;
+		apmc.mc_mobile = mc_mobile;
+
+		if(mch.bapa != null && mch.bapa > 0) {
+			//允许余额支付
+			apmc.can_buy_with_online_pay = "0";
+		} else {
+			//不允许支付
+			apmc.can_buy_with_online_pay = "1";
+		}
+
+		//允许充值
+		if(mch.supp_recharge.equals(1)) {
+			//支持充值
+			apmc.can_recharge = 1;
+		} else {
+			apmc.can_recharge = 0;
+		}
+		apmc.discount = mch.cr_discount;
+		apmc.goods_discount = mch.cr_discount;
+		//设置限制购买张数为每天购买
+		apmc.limit_discount_by_num = (mch.day_buy_limit ==null?0:mch.day_buy_limit);
+		apmc.mch_id = mch.id;
+		apmc.mc_level =  mch.h_name;
+		//设置最小充值金额
+		apmc.min_recharge_money = mch.least_recharge;
+		apmc.period = null;
+		//办卡送积分
+		apmc.point = "0";
+
+		apmc.mc_name = accpunt.mc_name;
+		apmc.mc_mobile = mc_mobile;
+		apmc.mc_pwd = accpunt.mc_pwd;
+		apmc.id_card = accpunt.id_card;
+		apmc.pid  = pid;
+		//		apmc.hardware_id = accpunt.hardware_id;
+		apmc.status = AccountProjectMCStatus.LOCKING;
+		//设置有效期
+		try{
+			if("FIXED".equals(mch.validate_type) && mch.validate_type != null){
+				apmc.period = mch.validate_period+" 23:59:59";
+			}else if("GETTIME".equals(mch.validate_type) && mch.validate_period != null){
+				String[] s = mch.validate_period.split("_");
+				Calendar c = Calendar.getInstance(TimeZone.getDefault());
+				c.setTime(new Date());
+				if("MONTH".equals(s[1])){
+					c.add(Calendar.MONTH, Integer.valueOf(s[0]));
+				}else if("YEAR".equals(s[1])){
+					c.add(Calendar.YEAR, Integer.valueOf(s[0]));
+				}
+				c.set(Calendar.HOUR_OF_DAY,23);
+				c.set(Calendar.MINUTE,59);
+				c.set(Calendar.SECOND,59);
+				apmc.period = DateUtil.format_yyyyMMddHHmmss(c.getTime());
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			throw new McrException(JsConstants.sys_config_error);
+		}
+		// 锁定会员卡等到支付
+		apmc.c_time = new Timestamp(new Date().getTime());
+		apmc.status = AccountProjectMCStatus.LOCKING;
+		jcTemplate.update(apmc);
+		return apmc;
+	}
+	
+	public List<AccountProjectMC> get_mcs_by_mobile(String mc_mobile) {
+		String hql = "select * from AccountProjectMC m where flag!=?   and mc_mobile=? and status!=?";
+		List<AccountProjectMC> result = jcTemplate.find(AccountProjectMC.class,hql, -1, mc_mobile,AccountProjectMCStatus.INIT);
+		return result;
+	}
+
+	/**
+	 * 根据卡编号查询会员卡
+	 * @param pid
+	 * @param mc_num
+	 * @return
+	 */
+	public AccountProjectMC get_normal_mc_by_num(BigInteger pid, String mc_num) {
+		String hql = "select * from AccountProjectMC m where flag!=? and mc_num=? and status=?";
+		List<AccountProjectMC> apm = jcTemplate.find(AccountProjectMC.class,hql, -1, mc_num, AccountProjectMCStatus.NORMAL);
+		if (apm == null || apm.size() == 0) {
+			return null;
+		}
+		for (def item : apm) {
+			// 当前项目的pid等于会员卡的pid,或者会员的pid 等于1 就是集团发的会员卡，通用卡
+			if (pid.equals(item.pid) || "1".toString().equals(item.pid.toString())) {
+				return item;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 根据卡编号查询会员卡
+	 * @param pid
+	 * @param mc_num
+	 * @return
+	 */
+	public AccountProjectMC get_normal_mc_by_id(def pid, def id) {
+		String hql = "select * from AccountProjectMC m where flag!=? and id=? and status=?";
+		AccountProjectMC item = jcTemplate.get(AccountProjectMC.class,hql, -1, id, AccountProjectMCStatus.NORMAL);
+		if (item == null) {
+			return null;
+		}
+		// 当前项目的pid等于会员卡的pid,或者会员的pid 等于1 就是集团发的会员卡，通用卡
+		if (pid.equals(item.pid) || "1".toString().equals(item.pid.toString())) {
+			return item;
+		}
+		return null;
+	}
+
+	
+	/**
+	 * 收银台充值的时候提前创建好一条数据
+	 * @param mch
+	 * @param num
+	 * @param pid
+	 * @return
+	 */
+	public AccountProjectMC createProjectMc(MemberCardHierarchy mch, String num,BigInteger  pid) {
+		AccountProjectMC apmc = new AccountProjectMC();
+		apmc.balance = "";
+		apmc.mc_pwd = "";
+		apmc.mc_mobile = "";
+		apmc.mc_num = num;
+		if(mch.bapa != null && mch.bapa > 0) {
+			//允许余额支付
+			apmc.can_buy_with_online_pay = "0";
+		} else {
+			//不允许支付
+			apmc.can_buy_with_online_pay = "1";
+		}
+
+		//允许充值
+		if(mch.supp_recharge.equals(1)) {
+			//支持充值
+			apmc.can_recharge = 1;
+		} else {
+			apmc.can_recharge = 0;
+		}
+		apmc.discount = mch.cr_discount;
+		apmc.goods_discount = mch.cr_discount;
+		//设置限制购买张数为每天购买
+		apmc.limit_discount_by_num = (mch.day_buy_limit ==null?0:mch.day_buy_limit);
+		apmc.mch_id = mch.id;
+		apmc.mc_level =  mch.h_name;
+		//设置最小充值金额
+		apmc.min_recharge_money = mch.least_recharge;
+		apmc.period = null;
+		//办卡送积分
+		apmc.point = "0";
+
+		apmc.pid  = pid;
+		//		apmc.hardware_id = accpunt.hardware_id;
+		apmc.status = AccountProjectMCStatus.LOCKING;
+		//设置有效期
+		try{
+			if("FIXED".equals(mch.validate_type) && mch.validate_type != null){
+				apmc.period = mch.validate_period+" 23:59:59";
+			}else if("GETTIME".equals(mch.validate_type) && mch.validate_period != null){
+				String[] s = mch.validate_period.split("_");
+				Calendar c = Calendar.getInstance(TimeZone.getDefault());
+				c.setTime(new Date());
+				if("MONTH".equals(s[1])){
+					c.add(Calendar.MONTH, Integer.valueOf(s[0]));
+				}else if("YEAR".equals(s[1])){
+					c.add(Calendar.YEAR, Integer.valueOf(s[0]));
+				}
+				c.set(Calendar.HOUR_OF_DAY,23);
+				c.set(Calendar.MINUTE,59);
+				c.set(Calendar.SECOND,59);
+				apmc.period = DateUtil.format_yyyyMMddHHmmss(c.getTime());
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			throw new McrException(JsConstants.sys_config_error);
+		}
+		apmc.c_time = new Timestamp(new Date().getTime());
+		apmc.status = AccountProjectMCStatus.INIT;
+		jcTemplate.update(apmc);
+		return apmc;
+	}
+	// 收银台解锁的时候
+	public void unlock_mc_num(AccountProjectMC apmc) {
+		apmc.c_time = new Timestamp(new Date().getTime());
+		apmc.status =  AccountProjectMCStatus.UNLOCK;
+		apmc.flag = -1;
+		jcTemplate.update(apmc);
+	}
+	
+
+	//	public AccountProjectMC get_mc_num( BigInteger pid, String mc_num) {
+	//		String hql = "select * from AccountProjectMC m where flag!=? and mc_num=? ";
+	//		AccountProjectMC apm = jcTemplate.get(AccountProjectMC.class,hql, -1, mc_num);
+	//		if (apm == null) {
+	//			return null;
+	//		}
+	//		if ("1".equals(apm.pid.toString()) || pid.equals(apm.pid)) {
+	//			return apm;
+	//		}
+	//		return  apm;
+	//	}
+
+	public def update_mc(AccountProjectMC project_card) {
+		project_card.c_time = new Timestamp(new Date().getTime());
+		return jcTemplate.update(project_card);
+	}
+
+	protected int nextInt(final int min, final int max){
+		Random rand= new Random();
+		int tmp = Math.abs(rand.nextInt());
+		return tmp % (max - min + 1) + min;
+	}
+
+	protected String compute_suff(String aim_str) {
+		def mod_array = [
+			7,
+			9,
+			10,
+			5,
+			8,
+			4,
+			2,
+			1,
+			6,
+			3,
+			17,
+			23,
+			37,
+			43,
+			59,
+			102,
+			88,
+			68,
+			99,
+			33,
+			66,
+			69,
+			96,
+			83,
+			33,
+			39
+		];
+		int sum = 0;
+		for(int i=0; i<aim_str.length(); i++) {
+			int c = aim_str.charAt(i);
+			int tmp_index = Integer.valueOf(c);
+			int tmp_index_mod = mod_array[i];
+			sum += tmp_index*tmp_index_mod;
+		}
+		int sum_yu = sum%11;
+		int sum_x = (12-sum_yu)/11;
+		return sum_x + "";
+	}
+	/**通过basic_id获取会员卡信息**/
+	public List<AccountProjectMC> getByBasic_id(BigInteger basic_id){
+		String sql ="select * from AccountProjectMC where flag!=? and  basic_id=? and status=?  ";
+		List<AccountProjectMC> result = jcTemplate.find(AccountProjectMC.class,sql, -1, basic_id, AccountProjectMCStatus.NORMAL);
+		return result;
+	}
+	
+	
+	public List<AccountProjectMC> get_by_apid_or_mobile(BigInteger basic_id,String mobile){
+		def p = [];
+		String sql ="select * from AccountProjectMC where flag!=? and status=? and ( ";
+		p.add(-1);
+		p.add(AccountProjectMCStatus.NORMAL);
+		String s = "";
+		if (basic_id != null) {
+			s += " basic_id=? " 
+			p.add(basic_id);
+		}
+		if (!StringUtil.isEmpty(s) && !StringUtil.isEmpty(mobile))  {
+			s += " or "
+		}
+		if (!StringUtil.isEmpty(mobile)) {
+			s += " mc_mobile=? "
+			p.add(mobile);
+		}
+		sql += s;
+		sql += " )";
+		List<AccountProjectMC> result = jcTemplate.find(AccountProjectMC.class, sql, p.toArray());
+		return result;
+	}
+	
+
+	public static void  main (String[] arg) {
+		println isPhone("13333333333")
+	}
+	public static boolean isPhone(final String phone) {
+		String regex = "";
+		if (phone.length() != 11) {
+			return false;
+		} else {
+			Pattern p = Pattern.compile(regex);
+			Matcher m = p.matcher(phone);
+			boolean isMatch = m.matches();
+			if (!isMatch) {
+			}
+			return isMatch;
+		}
+	}
+	
+	/**
+	 * 根据手机号查询可用的会员卡
+	 * @param mc_mobile
+	 * @return
+	 */
+	public def get_by_mobile(String mc_mobile,BigInteger pid){
+		String sql="select * from AccountProjectMC where mc_mobile=? and flag!=? and pid=?  and status=? ";
+		return jcTemplate.find(AccountProjectMC.class, sql, mc_mobile,-1,pid,AccountProjectMCStatus.NORMAL);
+	}
+	
+	/**
+	 * 根据手机号查询可用的会员卡
+	 * @param mc_mobile
+	 * @return
+	 */
+	public def get_by_num(String mc_num,BigInteger pid){
+		String sql="select * from AccountProjectMC where mc_num=? and flag!=? and pid=?  and status=? ";
+		return jcTemplate.find(AccountProjectMC.class, sql, mc_num,-1,pid,AccountProjectMCStatus.NORMAL);
+	}
+	
+	
+	
+	/**
+	 * 通过手机号查询未绑定api 的会员卡
+	 * @param mc_mobile
+	 * @param pid
+	 * @return
+	 */
+	public AccountProjectMC getByMobile(String mc_mobile,BigInteger pid){
+		String sql="select * from AccountProjectMC where mc_mobile=? and flag!=? and pid=?  and status=? and basic_id is null";
+		return jcTemplate.get(AccountProjectMC.class, sql, mc_mobile,-1,pid,AccountProjectMCStatus.NORMAL);
+	}
+	/**根据电话号码更新basic_id**/
+	public void updateByMobile(String mc_mobile,BigInteger basic_id,BigInteger pid){
+		AccountProjectMC apmc=getByMobile(mc_mobile,pid);
+		if(apmc!=null) {
+			apmc.basic_id=basic_id;
+			apmc.c_time=new Timestamp(new Date().getTime());
+			jcTemplate.update(apmc);
+		}
+	}
+
+
+
+	/**
+	 * 
+	 * @param project 当前项目id
+	 * @param mch 通过orderMc中的mch_id查出来
+	 * @param basic GlobalHolder获取当前id
+	 * @param check_mc_pwd orderMc中查出来
+	 * @param gift_balance 默认为0
+	 * @return
+	 */
+	public AccountProjectMC pub_card_by_rule(def pid, MemberCardHierarchy mch,BigInteger basic_id, String mobile, OrderMc order, String gift_balance) {
+		MemberCardRule mc_rule = mch.mcRule;
+		AccountProjectMC apmc = new AccountProjectMC();
+		apmc.a_time = new Date();
+		if(!DataUtils.isNumber(gift_balance)) {
+			gift_balance = "0";
+		}
+		apmc.balance = gift_balance;
+		apmc.basic_id = basic_id;
+		apmc.mc_pwd = order.init_pwd;
+		apmc.mc_mobile = mobile;
+		apmc.mc_num = order.card_no;
+		apmc.mc_name = order.mc_name;
+		apmc.id_card = order.id_card;
+		if(mch.bapa!=null&&mch.bapa>0) {
+			//允许余额支付
+			apmc.can_buy_with_online_pay = "0";
+		} else {
+			//不允许支付
+			apmc.can_buy_with_online_pay = "1";
+		}
+
+		//允许充值
+		if(mch.supp_recharge.equals(1)) {
+			//支持充值
+			apmc.can_recharge = 1;
+		} else {
+			apmc.can_recharge = 0;
+		}
+		apmc.discount = mch.cr_discount;
+		apmc.goods_discount = mch.cr_discount;
+		//设置限制购买张数为每天购买
+		apmc.limit_discount_by_num = mch.day_buy_limit;
+		apmc.mch_id = mch.id;
+		apmc.mc_level = mch.h_name;
+		apmc.mc_num = order.card_no;
+		//设置最小充值金额
+		apmc.min_recharge_money = mch.least_recharge;
+		//办卡送积分
+		apmc.point = "0";
+		apmc.pid = pid;
+		//设置有效期
+		try{
+			if("FIXED".equals(mch.validate_type) && mch.validate_type != null){
+				apmc.period = mch.validate_period+" 23:59:59";
+			}else if("GETTIME".equals(mch.validate_type) && mch.validate_period != null){
+				String[] s = mch.validate_period.split("_");
+				Calendar c = Calendar.getInstance(TimeZone.getDefault());
+				c.setTime(new Date());
+				if("MONTH".equals(s[1])){
+					c.add(Calendar.MONTH, Integer.valueOf(s[0]));
+				}else if("YEAR".equals(s[1])){
+					c.add(Calendar.YEAR, Integer.valueOf(s[0]));
+				}
+				c.set(Calendar.HOUR_OF_DAY,23);
+				c.set(Calendar.MINUTE,59);
+				c.set(Calendar.SECOND,59);
+				apmc.period = DateUtil.format_yyyyMMddHHmmss(c.getTime());
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			throw new McrException(JsConstants.sys_config_error);
+		}
+		apmc.id = jcTemplate.save(apmc);
+		return apmc;
+	}
+	
+	
+	/**
+	 * 用于绑定会员卡时 初始化本地会员信息
+	 * @param pid
+	 * @param appid
+	 * @param mc_num
+	 * @param mc_pwd
+	 * @return
+	 */
+	public AccountProjectMC init_local_mc(def  pid, def appid, String mc_num, String mc_pwd) {
+		//首先校验该会员卡号在该项目下是否已经绑定
+		String sql = "select * from AccountProjectMC a where flag!=? and pid=? and mc_num=?";
+		List<AccountProjectMC> result = jcTemplate.find(AccountProjectMC, sql, -1,pid,mc_num)
+		if(result!=null&&!result.isEmpty()) {
+			throw new ObjectExistExceptio("会员卡卡号重复");
+		}
+		AccountProjectMC  entity = new AccountProjectMC();
+		entity.pid = new BigInteger(pid.toString());
+		entity.basic_id = new BigInteger(appid) ;
+		entity.mc_num = mc_num;
+		entity.mc_pwd = mc_pwd;
+		entity.a_time = new Date();
+		entity.status = AccountProjectMCStatus.NORMAL;
+		def id  = JcTemplate.INSTANCE().save(entity);
+		entity.id = id;
+		return entity;
+	}
+}

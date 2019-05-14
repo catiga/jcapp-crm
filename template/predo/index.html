@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[[${str}]] | 预制卡管理</title>
+<link th:href="@{{sp}/css/bootstrap.min.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/font-awesome/css/font-awesome.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/css/animate.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="@{{sp}/css/style.css(sp=${pub_bucket})}" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/iCheck/custom.css|" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/jsTree/style.min.css|" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/sweetalert/sweetalert.css|" rel="stylesheet">
+<link th:href="|${pub_bucket}/css/plugins/ladda/ladda-themeless.min.css|" rel="stylesheet">
+
+<link th:href="|${pub_bucket}/css/plugins/select2/select2.min.css|" rel="stylesheet">
+</head>
+
+<body>
+	<div id="wrapper">
+		<div th:replace="../common/nav"></div>
+		<div id="page-wrapper" class="gray-bg">
+			<div th:replace="../common/top"></div>
+			<div class="row wrapper border-bottom white-bg page-heading">
+				<div class="col-sm-4">
+					<h2>预制卡管理</h2>
+					<ol class="breadcrumb">
+						<li><a href="index.html">Home</a></li>
+						<li class="active"><strong>预制卡订单列表</strong></li>
+					</ol>
+				</div>
+			</div>
+
+			<div class="wrapper wrapper-content animated fadeInRight ecommerce" style="padding-bottom:0px;">
+				<div class="ibox-content m-b-sm border-bottom">
+					<div class="row">
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label class="control-label" for="mc_list">会员卡规则</label>
+								<select name="mc_list" id="mc_list" class="form-control mc_list">
+									<option></option>
+									 <option  value='' disabled selected style='display:none;'>选择会员卡规则</option> 
+									<!-- <option th:each="w:${mc_all}" th:selected="${w.id==mcr_id}" th:value="${w.id}" th:text="${w.title}"></option> -->
+								</select>
+							</div>
+						</div>
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label class="control-label" for="mch_list">会员等级</label>
+								<select name="mch_list" id="mch_list" class="form-control mch_list">
+									<option></option>
+									<option  value='' disabled selected style='display:none;'>选择会员卡等级</option>
+									<!-- <option th:each="w:${mch_all}" th:mc_id="${w.mc_id}" th:value="${w.id}" th:text="${w.h_name}" th:selected="${w.id==mch_id}"></option> -->
+								</select>
+							</div>
+						</div>
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label class="control-label" for="order_num">制卡单号</label>
+								<input type="text" id="order_num" name="order_num" placeholder="输入制卡单" class="input-sm form-control" th:value="${order_num}">
+							</div>
+						</div>
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label class="control-label" for="card_num">会员卡号</label>
+								<div class="input-group">
+									<input type="text" id="card_num" name="card_num" placeholder="输入会员卡号" class="input-sm form-control" th:value="${card_num}"> 
+									<span class="input-group-btn">
+										<button type="button" class="btn btn-sm btn-primary do_query"> 查询</button>
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-lg-12 goods_area">
+					<div class="wrapper wrapper-content animated fadeInUp" style="padding-top:0px;">
+						<div class="ibox">
+							<div class="ibox-title">
+								<div class="ibox-tools">
+									<a href="javascript:void(0)" class="btn btn-primary btn-xs add_new_data" id="loading-example-btn">创建制卡订单</a>
+								</div>
+							</div>
+							<div class="ibox-content">
+								<div class="table-responsive">
+                                	<table class="table table-striped">
+										<thead>
+		                                    <tr>
+		                                    	<th>#</th>
+												<th>名称</th>
+												<th>创建时间</th>
+												<th>订单编号</th>
+												<th>创建数量</th>
+												<th>卡规则</th>
+												<th>卡等级</th>
+												<th>制卡状态</th>
+												<th>制卡明细</th>
+												<th>操作</th>
+		                                    </tr>
+	                                    </thead>
+										<tbody>
+											<tr th:each="st:${page.result}" th:attr_id="${st.id }">
+												<td class="check-mail">
+							                        <input type="checkbox" class="i-checks blick_g" th:attr_id="${st.id}">
+							                    </td>
+												<td>[[${st.name }]]</td>
+												<td>[[${#dates.format(st.a_time, 'yyyy-MM-dd HH:mm:ss')}]]</td>
+												<td>[[${st.order_num}]]</td>
+												<td>[[${st.total_num}]]</td>
+												<td>[[${st.mcr_name}]]</td>
+												<td>[[${st.mch_name}]]</td>
+												<td class='oss'>
+													<span th:if="${st.ss=='00'}">创建</span>
+													<span th:if="${st.ss=='10'}">制卡中</span>
+													<span th:if="${st.ss=='50'}">完成</span>
+												</td>
+												<td>
+													<button data-style="zoom-in" class="ladda-button btn btn-warning btn-sm detail" th:attr_id="${st.id }"><i class="fa fa-rub"></i> 查看 </button>
+												</td>
+												<td>
+													<button data-style="zoom-in" class="ladda-button btn btn-primary btn-sm item" th:if="${st.ss=='00'}" th:attr_id="${st.id }"><i class="fa fa-rub"></i> 编辑 </button>
+													<button data-style="zoom-in" class="ladda-button btn btn-primary btn-sm build" th:if="${st.ss=='00'}" th:attr_id="${st.id }"><i class="fa fa-rub"></i> 制卡 </button>
+													<button data-style="zoom-in" class="ladda-button btn btn-primary btn-sm finish" th:if="${st.ss=='10'}" th:attr_id="${st.id }"><i class="fa fa-rub"></i> 完成 </button>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+									<div th:replace="../common/page"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div th:replace="../common/foot"></div>
+		</div>
+	</div>
+
+	<!-- Mainly scripts -->
+	<script th:src="@{{sp}/js/jquery-2.1.1.js(sp=${pub_bucket})}"></script>
+	<script th:src="@{{sp}/js/bootstrap.min.js(sp=${pub_bucket})}"></script>
+	<script th:src="@{{sp}/js/plugins/metisMenu/jquery.metisMenu.js(sp=${pub_bucket})}"></script>
+	<script th:src="@{{sp}/js/plugins/slimscroll/jquery.slimscroll.min.js(sp=${pub_bucket})}"></script>
+
+	<!-- Custom and plugin javascript -->
+	<script th:src="@{{sp}/js/inspinia.js(sp=${pub_bucket})}"></script>
+	<script th:src="@{{sp}/js/plugins/pace/pace.min.js(sp=${pub_bucket})}"></script>
+	<script th:src="|${pub_bucket}/js/plugins/jsTree/jstree.min.js|"></script>	
+	<script th:src="@{{sp}/third/layer3/layer.js(sp=${pub_bucket})}" type="text/javascript"></script>
+	<script th:src="|${pub_bucket}/js/plugins/sweetalert/sweetalert.min.js|"></script>
+	<!-- iCheck -->
+    <script th:src="|${pub_bucket}/js/plugins/iCheck/icheck.min.js|"></script>
+    
+    <!-- Ladda -->
+    <script th:src="|${pub_bucket}/js/plugins/ladda/spin.min.js|"></script>
+    <script th:src="|${pub_bucket}/js/plugins/ladda/ladda.min.js|"></script>
+    <script th:src="|${pub_bucket}/js/plugins/ladda/ladda.jquery.min.js|"></script>
+    
+    <script th:src="|${pub_bucket}/js/plugins/select2/select2.full.min.js|"></script>
+	<script>
+		$(document).ready(function() {
+
+			$('#loading-example-btn').click(function() {
+				btn = $(this);
+				simpleLoad(btn, true)
+				location.href = '/crm/predo/add?ts='+Date.parse(new Date());
+				simpleLoad(btn, false)
+			});
+		});
+
+		function simpleLoad(btn, state) {
+			if (state) {
+				btn.children().addClass('fa-spin');
+				btn.contents().last().replaceWith(" Loading");
+			} else {
+				setTimeout(function() {
+					btn.children().removeClass('fa-spin');
+					btn.contents().last().replaceWith(" 创建制卡订单");
+				}, 2000);
+			}
+		}
+	</script>
+</body>
+
+<script type="text/javascript">
+$(function() {
+/* 	$(".mc_list").select2({placeholder:'选择会员卡等级',allowClear:true});
+	$(".mch_list").select2({placeholder:'选择会员卡规则',allowClear:true});
+ 	 */
+	/*	$(".mc_list").on("change", function() {
+		var $this = $(this);
+		$(".mch_list").find('option').each(function() {
+			if($(this).attr('mc_id')==$this.val()) {
+				$(this).show();
+			} else {
+				$(this).hide();
+			}
+		});
+		$(".mch_list").select2({placeholder:'选择会员卡规则',allowClear:true});
+	}); */
+	$.ajax({
+        type: "POST",//请求方式
+        url:'[[${contextPath}]]/get_member_card_rule_list',
+        dataType: "json",
+　 		success: function(data){
+    	var table1 = data.obj;
+		for (var i = 0; i < table1.length; i++) {
+			var item1 = table1[i];
+			$("#mc_list").append("<option value=\""+item1.id+"\">"+item1.title+"</option>");
+		 } 
+		}
+    });
+	var id=null
+  	$(".mc_list").change(function(){
+  		id=$(this).val();/*获取选中的option值*/
+  		$("#mch_list").find("option").remove();
+  		$.ajax({
+  		   type: "POST",//请求方式
+  		   url:'[[${contextPath}]]/get_all_hierarchy_list',
+  		   dataType: "json",
+  		　   success: function(data){
+  		   var table = data.obj;
+  			  for (var i = 0; i < table.length; i++) {
+  				var item = table[i];
+  				if(item.mc_id==id){
+  					$("#mch_list").append("<option value=\""+item.id+"\">"+item.h_name+"</option>");
+  				 }
+  			  }
+  			}
+  		 })
+  	});
+	
+	var l = $(".ladda-button").ladda();
+	$('.i-checks').iCheck({
+        checkboxClass: 'icheckbox_square-green',
+        radioClass: 'iradio_square-green',
+    });
+	var check_gs = [];
+	$(".blick_g").on("ifChecked ifUnchecked", function(event) {
+		var id = $(this).attr("attr_id");
+		if (event.type == 'ifChecked') {
+            $(this).iCheck('check');
+            check_gs.push(id);
+        } else {
+        	$(this).iCheck('uncheck');
+        	check_gs.splice($.inArray(id, check_gs), 1);
+        }
+	});
+	
+	$(".do_query").on("click", function() {
+		var order_num = $.trim($("#order_num").val());
+		var card_num = $.trim($("#card_num").val());
+		var mcr_id = $("#mc_list").val();
+		var mch_id = $("#mch_list").val();
+		location.href = '/crm/predo/index?order_num='+order_num+'&card_num='+card_num+'&mcr_id='+mcr_id+'&mch_id='+mch_id +"&ts="+  Date.parse(new Date());
+	});
+	
+	$(".item").on("click", function() {
+		$(this).ladda('start');
+		location.href = '/crm/predo/add?id=' + $(this).attr("attr_id") +"&ts=" + Date.parse(new Date());
+	});
+	
+	$(".build").on("click", function() {
+		var $this = $(this);
+		swal({
+	        title: "确定开始制卡操作吗?",
+	        text: "订单状态将修改为制卡中，并且禁止编辑基本信息!",
+	        type: "warning",
+	        showCancelButton: true,
+	        confirmButtonColor: "#DD6B55",
+	        confirmButtonText: "确定",
+	        closeOnConfirm: false
+	    }, function () {
+	    	$this.ladda('start');
+	    	$.post('/crm/predo/aj/build', {id:$this.attr('attr_id')}, function(data) {
+	    		$this.ladda('stop');
+	    		if(data.available) {
+	    			$this.parent().parent().find('.oss').html('制卡中');
+	    			$this.hide();
+	    			swal("操作成功!", "制卡成功.", "success");
+	    		} else {
+					var code = data.messages[0];
+					var msg = "操作失败：" + code;
+					layer.msg(msg, {shift: 6});
+				}
+	    	});
+	    });
+	});
+	
+	$(".finish").on("click", function() {
+		var $this = $(this);
+		swal({
+	        title: "确定完成制卡操作吗?",
+	        text: "订单状态将修改为完成，并且禁止编辑所有信息!",
+	        type: "warning",
+	        showCancelButton: true,
+	        confirmButtonColor: "#DD6B55",
+	        confirmButtonText: "确定",
+	        closeOnConfirm: false
+	    }, function () {
+	    	$this.ladda('start');
+	    	$.get('/crm/predo/aj/finish', {id:$this.attr('attr_id')}, function(data) {
+	    		$this.ladda('stop');
+	    		if(data.available) {
+	    			$this.parent().parent().find('.oss').html('完成');
+	    			$this.hide();
+	    			swal("操作成功!", "制卡完成.", "success");
+	    		} else {
+					var code = data.messages[0];
+					var msg = "操作失败：" + code;
+					layer.msg(msg, {shift: 6});
+				}
+	    	});
+	    });
+	});
+	$(".detail").on("click", function() {
+		$(this).ladda('start');
+		location.href = '/crm/predo/detail?id=' + $(this).attr("attr_id") + "&tx=" + Date.parse(new Date());
+	});
+});
+</script>
+
+</html>
