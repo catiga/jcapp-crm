@@ -28,7 +28,6 @@ try{
 	if("".equals(mchList)){
 		return  AvailabilityStatus.notAvailable("查询不到会员卡等级列表");
 	}
-	Logger.info(JackSonBeanMapper.toJson(mchList));
 	if(mchList && !mchList.empty) {
 		for(x in mchList) {
 			MemberCardRule card_rule = JcTemplate.INSTANCE().get(MemberCardRule, 'select * from MemberCardRule where id=?', x.mc_id);
