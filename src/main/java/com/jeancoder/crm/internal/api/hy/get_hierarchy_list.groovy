@@ -8,6 +8,7 @@ import com.jeancoder.crm.ready.entity.MemberCardHierarchy
 import com.jeancoder.crm.ready.entity.MemberCardRule
 import com.jeancoder.crm.ready.service.MemberCardHierarchyService
 import com.jeancoder.crm.ready.service.MemberCardRuleService
+import com.jeancoder.jdbc.JcTemplate
 
 JCLogger Logger = LoggerSource.getLogger(this.getClass().getName());
 
@@ -25,6 +26,12 @@ try{
 	List<MemberCardHierarchy> mchList = MemberCardHierarchyService.INSTANSE.getListAvailable(mcr_id);
 	if("".equals(mchList)){
 		return  AvailabilityStatus.notAvailable("查询不到会员卡等级列表");
+	}
+	if(mchList && !mchList.empty) {
+		for(x in mchList) {
+			MemberCardRule card_rule = JcTemplate.INSTANCE().get(MemberCardRule, 'select * from MemberCardRule where id?', x.mc_id);
+			x.mcRule = card_rule;
+		}
 	}
 	return AvailabilityStatus.available(mchList);
 }catch(Exception e){
