@@ -31,7 +31,7 @@ try{
 	Logger.info(JackSonBeanMapper.toJson(mchList));
 	if(mchList && !mchList.empty) {
 		for(x in mchList) {
-			MemberCardRule card_rule = JcTemplate.INSTANCE().get(MemberCardRule, 'select * from MemberCardRule where id?', x.mc_id);
+			MemberCardRule card_rule = JcTemplate.INSTANCE().get(MemberCardRule, 'select * from MemberCardRule where id=?', x.mc_id);
 			x.mcRule = card_rule;
 		}
 	}
