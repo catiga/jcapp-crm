@@ -5,6 +5,7 @@ import com.jeancoder.app.sdk.source.LoggerSource
 import com.jeancoder.core.log.JCLogger
 import com.jeancoder.crm.ready.common.AvailabilityStatus
 import com.jeancoder.crm.ready.entity.MemberCardHierarchy
+import com.jeancoder.crm.ready.entity.MemberCardHierarchyDetail
 import com.jeancoder.crm.ready.entity.MemberCardRule
 import com.jeancoder.crm.ready.service.MemberCardHierarchyService
 import com.jeancoder.crm.ready.service.MemberCardRuleService
@@ -32,6 +33,11 @@ try{
 		for(x in mchList) {
 			MemberCardRule card_rule = JcTemplate.INSTANCE().get(MemberCardRule, 'select * from MemberCardRule where id=?', x.mc_id);
 			x.mcRule = card_rule;
+			
+			MemberCardHierarchyDetail detail = JcTemplate.INSTANCE().get(MemberCardHierarchyDetail, 'select * from MemberCardHierarchyDetail where flag!=? and mch_id=?', -1, x.id);
+			if(detail!=null) {
+				x.detail = detail;
+			}
 		}
 	}
 	return AvailabilityStatus.available(mchList);

@@ -100,6 +100,9 @@ public class MemberCardHierarchy {
 	@JCNotColumn
 	MemberCardRule mcRule;
 	
+	@JCNotColumn
+	MemberCardHierarchyDetail detail;
+	
 	public MemberCardRule getMcRule() {
 		return mcRule;
 	}
