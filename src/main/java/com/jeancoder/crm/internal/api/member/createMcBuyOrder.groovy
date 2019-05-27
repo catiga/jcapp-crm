@@ -72,7 +72,7 @@ try {
 	}
 	
 	pwd = StringUtil.trim(pwd);
-	if (StringUtil.isEmpty(pre_id) || StringUtil.isEmpty(mc_name) || StringUtil.isEmpty(mc_mobile) || StringUtil.isEmpty(id_card)|| StringUtil.isEmpty(pwd)) {
+	if (StringUtil.isEmpty(pre_id) || StringUtil.isEmpty(mc_name) || StringUtil.isEmpty(mc_mobile)|| StringUtil.isEmpty(pwd)) {
 		return result.setData(AvailabilityStatus.notAvailable([JsConstants.input_param_empty, "参数不能为空"] as String[]));
 	}
 	
@@ -85,10 +85,13 @@ try {
 		return result.setData(AvailabilityStatus.notAvailable([JsConstants.input_param_error, "手机号格式错误"] as String[] ));
 	}
 	//判断身份证号是否合法
-	p = java.util.regex.Pattern.compile(/^\d{17}[0-9Xx]$|^\d{15}$/);
-	 matcher = p.matcher(id_card);
-	if(!matcher.matches()){
-		return result.setData(AvailabilityStatus.notAvailable([JsConstants.input_param_error,"身份证格式错误"] as String[]));
+	if(id_card) {
+		//如果填入身份证号才校验是否正确
+		p = java.util.regex.Pattern.compile(/^\d{17}[0-9Xx]$|^\d{15}$/);
+		matcher = p.matcher(id_card);
+		if(!matcher.matches()){
+			return result.setData(AvailabilityStatus.notAvailable([JsConstants.input_param_error,"身份证格式错误"] as String[]));
+		}
 	}
 	
 	// 检查手机是否已经对应的有会员卡
@@ -129,13 +132,6 @@ try {
 	def order_data = JackSonBeanMapper.toJson(orderDto);
 	order_data = URLEncoder.encode(order_data);
 	order_data = URLEncoder.encode(order_data);
-	
-//	List<CommunicationParam> params = new ArrayList<CommunicationParam>();
-//	params.add(new CommunicationParam("oc", "8000"));
-//	params.add(new CommunicationParam("od",order_data));
-//	params.add(new CommunicationParam("log_id",log_id.toString()));
-//	//开始去交易中心注册订单
-//	def trade = RemoteUtil.connect(SimpleAjax.class, "trade", "/incall/create_trade", params);
 	
 	SimpleAjax trade = JC.internal.call(SimpleAjax.class, 'trade', '/incall/create_trade', ['oc':'8000','od':order_data, log_id:log_id, pid:pid]);
 	
