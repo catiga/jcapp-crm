@@ -144,8 +144,10 @@ class OrderRechargeService {
 		}
 		entity.ops = ops;
 		if (ops.equals(1)) {
-			entity.puid = tolen.user.id;
-			entity.puname = tolen.user.name;
+			if(tolen) {
+				entity.puid = tolen.user.id;
+				entity.puname = tolen.user.name;
+			}
 		}
 		def id = jcTemplate.save(entity);
 		entity.id = id;
