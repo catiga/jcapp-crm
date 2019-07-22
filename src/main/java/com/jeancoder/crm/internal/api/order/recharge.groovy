@@ -156,7 +156,7 @@ try {
 					gift_detail.amount = gift_balance.toString();
 					gift_detail.code = McDetailConstant.gift_order;
 					gift_detail.num = CPISCoderTools.serialNum(gift_detail.code);
-					JcTemplate.INSTANCE().save(detail);
+					JcTemplate.INSTANCE().save(gift_detail);
 					//同时更新余额
 					new_account.balance = new BigDecimal(new_account.balance).add(gift_balance).toString();
 					JcTemplate.INSTANCE().update(new_account);
