@@ -140,7 +140,7 @@ try {
 			//需要进行充值赠送
 			try {
 				def gift_balance = rechargeMarketDto.obj;
-				gift_balance = new BigDecimal(gift_balance).multiply('100');	//转变为分
+				gift_balance = new BigDecimal(gift_balance).multiply(new BigDecimal('100'));	//转变为分
 				
 				if(gift_balance > 0) {
 					// 构建充值记录
