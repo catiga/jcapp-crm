@@ -7,6 +7,7 @@ import com.jeancoder.app.sdk.source.LoggerSource
 import com.jeancoder.core.log.JCLogger
 import com.jeancoder.core.result.Result
 import com.jeancoder.crm.ready.common.TradeCommon
+import com.jeancoder.crm.ready.constant.McDetailConstant
 import com.jeancoder.crm.ready.constant.SimpleAjax
 import com.jeancoder.crm.ready.dto.market.RechargeMarketDto
 import com.jeancoder.crm.ready.dto.order.NotifyObj
@@ -23,12 +24,14 @@ import com.jeancoder.crm.ready.service.AccountProjectMcDetailService
 import com.jeancoder.crm.ready.service.AccountProjectMcService
 import com.jeancoder.crm.ready.service.MemberCardHierarchyService
 import com.jeancoder.crm.ready.service.OrderRechargeService
+import com.jeancoder.crm.ready.util.CPISCoderTools
 import com.jeancoder.crm.ready.util.JackSonBeanMapper
 import com.jeancoder.crm.ready.util.MD5Util
 import com.jeancoder.crm.ready.util.MoneyUtil
 import com.jeancoder.crm.ready.util.NativeUtil
 import com.jeancoder.crm.ready.util.RemoteUtil
 import com.jeancoder.crm.ready.util.StringUtil
+import com.jeancoder.jdbc.JcTemplate
 
 /*
  * 充值接口通知
@@ -129,10 +132,39 @@ try {
 	}
 	
 	
-	/***************************赠送卡劵*******************************************/
+	/***************************赠送卡劵或余额的营销活动*******************************************/
 	try {
 		AccountProjectMC new_account = AccountProjectMcService.INSTANSE.getItem(order.acmid);//通过acmid找到对应的会员卡
 		RechargeMarketDto rechargeMarketDto = NativeUtil.connect(RechargeMarketDto.class, 'market', '/market/mc_recharge_market', ["mobile":new_account.mc_mobile,"pid":pid,"h_id":new_account.mch_id,"recharge_amount":order.pay_amount,"s_id":order.store_id]);
+		if(rechargeMarketDto && rechargeMarketDto.obj!=null) {
+			//需要进行充值赠送
+			try {
+				def gift_balance = rechargeMarketDto.obj;
+				gift_balance = new BigDecimal(gift_balance).multiply('100');	//转变为分
+				
+				if(gift_balance > 0) {
+					// 构建充值记录
+					AccountProjectMcDetail gift_detail = new AccountProjectMcDetail();
+					gift_detail.pid =  pid;
+					gift_detail.acmid = new_account.id;
+					gift_detail.order_no = order.order_no;
+					gift_detail.o_c =  OrderConstants.OrderType._recharge_mc_;
+					gift_detail.a_time = new Date();
+					gift_detail.c_time = new Timestamp(new Date().getTime());
+					gift_detail.flag = 0;
+					gift_detail.remarks = "";
+					gift_detail.amount = gift_balance.toString();
+					gift_detail.code = McDetailConstant.gift_order;
+					gift_detail.num = CPISCoderTools.serialNum(gift_detail.code);
+					JcTemplate.INSTANCE().save(detail);
+					//同时更新余额
+					new_account.balance = new BigDecimal(new_account.balance).add(gift_balance).toString();
+					JcTemplate.INSTANCE().update(new_account);
+				}
+			} catch(any) {
+				Logger.error("参加营销活动赠送会员余额失败" + JackSonBeanMapper.toJson(rechargeMarketDto), any);
+			}
+		}
 		Logger.info "参加充值营销活动结果" + JackSonBeanMapper.toJson(rechargeMarketDto);
 	} catch (Exception ee) {
 		Logger.error("参加营销活动失败", ee);
