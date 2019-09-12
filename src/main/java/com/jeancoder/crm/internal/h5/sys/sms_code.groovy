@@ -10,6 +10,10 @@ import com.jeancoder.crm.ready.util.JackSonBeanMapper
 def p = JC.internal.param('p')?.toString()?.trim();
 
 def pid = 1;
+def tmp_pid = JC.internal.param('pid');
+if(!tmp_pid) {
+	pid = tmp_pid;
+}
 def result = JC.internal.call('project', '/incall/project_by_id', [pid:pid]);
 def proj_name = '';
 if(result) {
