@@ -1,10 +1,10 @@
 package com.jeancoder.crm.ready.entity
 
-
 import java.sql.Timestamp
 
 import com.jeancoder.jdbc.bean.JCBean
 import com.jeancoder.jdbc.bean.JCID
+
 @JCBean(tbname = "mm_data_account_basic")
 class AccountBasic {
 	@JCID
