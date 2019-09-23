@@ -392,4 +392,28 @@ CREATE TABLE `mm_pre_mc_order_item`  (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Compact;
 
+CREATE TABLE `data_account_address` (
+  `id` bigint(11) unsigned NOT NULL AUTO_INCREMENT,
+  `basic_id` bigint(20) DEFAULT NULL,
+  `ap_id` bigint(20) DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `country` varchar(255) NOT NULL DEFAULT '0000',
+  `province` varchar(255) DEFAULT NULL,
+  `city` varchar(255) DEFAULT NULL,
+  `zone` varchar(255) DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `mobile` varchar(255) DEFAULT NULL,
+  `flag` tinyint(4) NOT NULL DEFAULT '0',
+  `c_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `province_code` varchar(255) DEFAULT NULL,
+  `city_code` varchar(255) DEFAULT NULL,
+  `zone_code` varchar(255) DEFAULT NULL,
+  `is_def` tinyint(1) NOT NULL DEFAULT '0',
+  `zipcode` varchar(16) DEFAULT NULL,
+  `proj_id` bigint(20) DEFAULT NULL,
+  `a_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1192 DEFAULT CHARSET=utf8;
+
 SET FOREIGN_KEY_CHECKS = 1;
+
