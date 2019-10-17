@@ -34,6 +34,33 @@ class AccountInfo {
 	
 	String user_no;
 	
+	/**
+	 * 新增字段开始
+	 */
+	BigInteger pid;
+	
+	String birthday;
+	
+	BigDecimal weight;
+	
+	BigDecimal height;
+	
+	String email;
+	
+	String postcode;
+	
+	String countrycode;
+	
+	String countryname;
+	
+	String ethnicitycode;	//种族信仰代码
+	
+	String ethnicityname;	//种族信仰名称
+	/**
+	 * 新增字段结束
+	 */
+	
+	
 	@JCNotColumn
 	String part_id;
 	

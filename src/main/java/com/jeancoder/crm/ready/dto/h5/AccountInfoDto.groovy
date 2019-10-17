@@ -23,6 +23,16 @@ class AccountInfoDto {
 	String part_id;
 	String session_key;
 	
+	String birthday;
+	BigDecimal weight;
+	BigDecimal height;
+	String email;
+	String postcode;
+	String countrycode;
+	String countryname;
+	String ethnicitycode;	//种族信仰代码
+	String ethnicityname;	//种族信仰名称
+	
 	//管理界面
 	def mt;
 	
@@ -41,6 +51,16 @@ class AccountInfoDto {
 			this.c_time = info.c_time;
 			this.flag = info.flag;
 			this.part_id = info.part_id;
+			
+			this.birthday = info.birthday;
+			this.weight = info.weight;
+			this.height = info.height;
+			this.email = info.email;
+			this.postcode = info.postcode;
+			this.countrycode = info.countrycode;
+			this.countryname = info.countryname;
+			this.ethnicitycode = info.ethnicitycode;
+			this.ethnicityname = info.ethnicityname;
 		}
 	}
 }

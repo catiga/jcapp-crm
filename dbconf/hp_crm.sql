@@ -21,20 +21,31 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- Table structure for account_info
 -- ----------------------------
 DROP TABLE IF EXISTS `account_info`;
-CREATE TABLE `account_info`  (
-  `id` bigint(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `ap_id` bigint(20) NULL DEFAULT NULL,
-  `head` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
-  `nickname` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
-  `realname` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
-  `sex` tinyint(4) NOT NULL DEFAULT 0,
-  `info` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
-  `a_time` datetime(0) NULL DEFAULT NULL,
-  `c_time` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0) ON UPDATE CURRENT_TIMESTAMP(0),
-  `flag` tinyint(4) NOT NULL DEFAULT 0,
-  `user_no` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
+CREATE TABLE `account_info` (
+  `id` bigint(11) unsigned NOT NULL AUTO_INCREMENT,
+  `ap_id` bigint(20) DEFAULT NULL,
+  `head` varchar(255) CHARACTER SET utf8 DEFAULT NULL,
+  `nickname` varchar(255) CHARACTER SET utf8 DEFAULT NULL,
+  `realname` varchar(255) CHARACTER SET utf8 DEFAULT NULL,
+  `sex` tinyint(4) NOT NULL DEFAULT '0',
+  `info` varchar(255) CHARACTER SET utf8 DEFAULT NULL,
+  `a_time` datetime DEFAULT NULL,
+  `c_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `flag` tinyint(4) NOT NULL DEFAULT '0',
+  `user_no` varchar(255) CHARACTER SET utf8 DEFAULT NULL,
+  `pid` bigint(20) DEFAULT NULL,
+  `birthday` char(10) DEFAULT NULL,
+  `weight` decimal(10,2) DEFAULT NULL,
+  `height` decimal(10,2) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `mobile` varchar(255) DEFAULT NULL,
+  `postcode` varchar(255) DEFAULT NULL,
+  `countrycode` varchar(255) DEFAULT NULL,
+  `countryname` varchar(255) DEFAULT NULL,
+  `ethnicitycode` varchar(255) DEFAULT NULL,
+  `ethnicityname` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Compact;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 -- ----------------------------
 -- Table structure for data_account_session
