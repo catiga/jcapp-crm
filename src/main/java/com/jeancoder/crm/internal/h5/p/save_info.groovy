@@ -14,7 +14,8 @@ def postcode = JC.internal.param('postcode');
 def weight = JC.internal.param('weight');
 def height = JC.internal.param('height');
 def countryname = JC.internal.param('countryname');
-def ethnicity = JC.internal.param('ethnicity');
+def ethnicitycode = JC.internal.param('ethnicitycode');
+def ethnicityname = JC.internal.param('ethnicityname');
 def birthday = JC.internal.param('birthday');
 
 def ap_id = JC.internal.param('ap_id');
@@ -45,7 +46,8 @@ try {
 } catch(any) {}
 
 info.countryname = countryname;
-info.ethnicitycode = ethnicity;
+info.ethnicitycode = ethnicitycode;
+info.ethnicityname = ethnicityname;
 
 if(update) {
 	JcTemplate.INSTANCE().update(info);
