@@ -2,11 +2,14 @@ package com.jeancoder.crm.internal.h5.sys
 
 import com.jeancoder.app.sdk.JC
 import com.jeancoder.app.sdk.source.MemSource
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.core.log.JCLoggerFactory
 import com.jeancoder.core.power.MemPower
 import com.jeancoder.crm.ready.constant.SimpleAjax
 import com.jeancoder.crm.ready.sms.Sender
 import com.jeancoder.crm.ready.util.JackSonBeanMapper
 
+JCLogger logger = JCLoggerFactory.getLogger('sms_code');
 def p = JC.internal.param('p')?.toString()?.trim();
 
 def pid = 1;
@@ -32,7 +35,7 @@ int tmp = Math.abs(rand.nextInt());
 tmp = tmp % (9999 - 1000 + 1) + 1000;
 def random = tmp + "";
 
-println p + '==========' + random;
+logger.info p + '==========' + random;
 MemPower mem = MemSource.getMemPower();
 mem.set('_login_sms_code_' + p, random);
 
