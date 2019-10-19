@@ -17,6 +17,7 @@ def countryname = JC.internal.param('countryname');
 def ethnicitycode = JC.internal.param('ethnicitycode');
 def ethnicityname = JC.internal.param('ethnicityname');
 def birthday = JC.internal.param('birthday');
+def gender = JC.request.param('gender');
 
 def ap_id = JC.internal.param('ap_id');
 def pid = JC.internal.param('pid');
@@ -37,6 +38,7 @@ info.mobile = mobile;
 info.email = email;
 info.postcode = postcode;
 info.birthday = birthday;
+
 try {
 	info.weight = new BigDecimal(weight);
 } catch(any) {}
@@ -48,6 +50,10 @@ try {
 info.countryname = countryname;
 info.ethnicitycode = ethnicitycode;
 info.ethnicityname = ethnicityname;
+
+try {
+	info.sex = Integer.valueOf(gender);
+} catch(any) {}
 
 if(update) {
 	JcTemplate.INSTANCE().update(info);
