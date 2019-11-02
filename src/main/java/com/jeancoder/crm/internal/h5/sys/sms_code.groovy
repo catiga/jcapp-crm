@@ -68,7 +68,8 @@ if(!sms_config_data) {
 		}
 	}
 	KJCX kj = new KJCX(gate_way, user_name, user_pass);
-	kj.send(p, content);
+	def send_result = kj.send(p, content);
+	logger.info('hengdianfilm_sender_result=' + send_result);
 }
 
 return SimpleAjax.available('', random);
