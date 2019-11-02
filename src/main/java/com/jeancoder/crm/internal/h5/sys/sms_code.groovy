@@ -68,6 +68,9 @@ if(!sms_config_data) {
 		}
 	}
 	KJCX kj = new KJCX(gate_way, user_name, user_pass);
+	
+	//修改content
+	content = '【横店影视】您的账号注册验证码为:' + random + '，验证码有效时间为5分钟。';
 	def send_result = kj.send(p, content);
 	logger.info('hengdianfilm_sender_result=' + send_result);
 }

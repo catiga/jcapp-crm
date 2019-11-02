@@ -35,5 +35,7 @@ class KJCX {
 	
 	static void main(def artc) {
 		//KJCX.send(null, null);
+		def result = new KJCX('http://api.cxton.com:8080/eums/utf8/send_strong.do', 'hdyshy', 'mwcejrra').send('13501020884', 'ceshi一下');
+		println result;
 	}
 }
