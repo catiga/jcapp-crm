@@ -49,7 +49,7 @@ def sms_config_data = null;
 if(sms_config && sms_config.available) {
 	sms_config_data = sms_config.data;
 }
-
+logger.info(sms_config_data + '');
 if(!sms_config_data) {
 	//走默认配置短信接口
 	logger.info('sender by own');
