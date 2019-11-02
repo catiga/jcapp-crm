@@ -49,7 +49,6 @@ def sms_config_data = null;
 if(sms_config && sms_config.available) {
 	sms_config_data = sms_config.data;
 }
-logger.info(sms_config_data + '');
 if(!sms_config_data) {
 	//走默认配置短信接口
 	logger.info('sender by own');
@@ -58,7 +57,7 @@ if(!sms_config_data) {
 	//走横店特殊发送接口
 	logger.info('sender by hengdian film');
 	def gate_way = null; def user_name = null; def user_pass = null;
-	
+	sms_config_data = JackSonBeanMapper.jsonToList(sms_config_data);
 	for(x in sms_config_data) {
 		if(x['key']=='uri') {
 			gate_way = x['value'];
