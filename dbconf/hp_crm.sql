@@ -426,5 +426,31 @@ CREATE TABLE `data_account_address` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1192 DEFAULT CHARSET=utf8;
 
+CREATE TABLE `mm_binddata_pet` (
+  `id` bigint(11) unsigned NOT NULL AUTO_INCREMENT,
+  `ap_id` bigint(20) DEFAULT NULL,
+  `basic_id` bigint(20) DEFAULT NULL,
+  `pid` bigint(20) DEFAULT NULL,
+  `headpic` varchar(255) DEFAULT NULL,
+  `nickname` varchar(255) DEFAULT NULL,
+  `catcode` varchar(255) DEFAULT NULL,
+  `catname` varchar(255) DEFAULT NULL,
+  `gender` tinyint(4) DEFAULT NULL,
+  `birthday` char(10) DEFAULT NULL,
+  `remark` varchar(255) DEFAULT NULL,
+  `stature` varchar(16) DEFAULT NULL,
+  `sterilisation` varchar(16) DEFAULT NULL,
+  `give_birth` varchar(16) DEFAULT NULL,
+  `hair_color` varchar(16) DEFAULT NULL,
+  `disease_history` varchar(255) DEFAULT NULL,
+  `hair_care_brand` varchar(255) DEFAULT NULL,
+  `food_brand` varchar(255) DEFAULT NULL,
+  `a_time` datetime DEFAULT NULL,
+  `c_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `flag` tinyint(4) NOT NULL DEFAULT '0',
+  `nature` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
