@@ -35,12 +35,12 @@ int tmp = Math.abs(rand.nextInt());
 tmp = tmp % (9999 - 1000 + 1) + 1000;
 def random = tmp + "";
 
-logger.info p + '==========' + random;
-
 MemPower mem = MemSource.getMemPower();
 mem.set('_login_sms_code_' + p, random);
 
 def content = random + '，是您的账户验证码。' + proj_name;
+
+logger.info p + '==========' + random + ', sign=' + content;
 
 //开始获取短信网关配置
 SimpleAjax sms_config = JC.internal.call(SimpleAjax, 'project', '/sys/get_sms_config', null);
