@@ -20,6 +20,7 @@ if(!tmp_pid) {
 }
 def result = JC.internal.call('project', '/incall/project_by_id', [pid:pid]);
 def proj_name = '';
+logger.info('project_result=' + result);
 if(result) {
 	try {
 		result = JackSonBeanMapper.jsonToMap(result);
@@ -27,7 +28,7 @@ if(result) {
 		proj_name = result['proj_name'];
 		proj_name = '【' + proj_name + '】';
 	} catch(any) {
-		logger.error(any);
+		any.printStackTrace();
 	}
 }
 
