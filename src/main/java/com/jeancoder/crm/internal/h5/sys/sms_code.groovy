@@ -27,6 +27,7 @@ if(result) {
 		proj_name = result['proj_name'];
 		proj_name = '【' + proj_name + '】';
 	} catch(any) {
+		logger.error(any);
 	}
 }
 
