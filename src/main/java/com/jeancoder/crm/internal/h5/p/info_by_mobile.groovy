@@ -16,7 +16,7 @@ AccountBasic basic = JcTemplate.INSTANCE().get(AccountBasic, 'select * from Acco
 if(basic==null) {
 	return SimpleAjax.notAvailable('obj_not_found,手机号码未找到')
 }
-AccountThirdBind bind = JcTemplate.INSTANCE().get(AccountThirdBind, 'select * from AccountThirdBind where account_id=? and pid=?', basic.id, pid);
+AccountThirdBind bind = JcTemplate.INSTANCE().get(AccountThirdBind, 'select * from AccountThirdBind where flag!=? and account_id=? and pid=?', -1, basic.id, pid);
 if(bind==null) {
 	return SimpleAjax.notAvailable('obj_not_found,账户信息未找到')
 }
