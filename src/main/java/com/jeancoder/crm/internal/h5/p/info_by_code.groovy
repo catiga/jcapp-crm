@@ -5,6 +5,8 @@ import javax.servlet.http.Cookie
 import com.jeancoder.app.sdk.JC
 import com.jeancoder.app.sdk.source.ResponseSource
 import com.jeancoder.core.http.JCCookie
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.core.log.JCLoggerFactory
 import com.jeancoder.crm.ready.constant.SimpleAjax
 import com.jeancoder.crm.ready.dto.ProjectFrontConfig
 import com.jeancoder.crm.ready.dto.h5.AccountInfoDto
@@ -18,8 +20,10 @@ import com.jeancoder.crm.ready.util.GlobalHolder
 
 import groovy.json.JsonSlurper
 
+JCLogger logger = JCLoggerFactory.getLogger('');
 def code = JC.internal.param('code')?.toString()?.trim();
 def domain = JC.internal.param('domain');
+def type = JC.internal.param('type');
 
 //获取项目支付信息配置
 SimpleAjax supp_config = JC.internal.call(SimpleAjax, 'project', '/incall/frontconfig_by_domain', [domain:domain, app_type:'20']);
@@ -30,9 +34,9 @@ def pid = supp_config.data['project_id'];
 def app_id = supp_config.data['app_id'];
 def app_secret = supp_config.data['app_key'];
 def url = "https://api.weixin.qq.com/sns/oauth2/access_token?appid="+app_id+"&secret="+app_secret+"&code="+code+"&grant_type=authorization_code";
-println "url___" + url;
+
 String json = JC.remote.http_call(url, null);
-println json;
+
 /**
  * wrong json format
  * {"errcode":40029,"errmsg":"invalid code, hints: [ req_id: JXWgvA05584679 ]"}
@@ -68,12 +72,12 @@ if(openid==null) {
 }
 
 def info_map = null;
-println 'scope======' + scope;
+
 if(scope=='snsapi_userinfo') {
 	//开始获取用户微信资料
 	def get_info_url = 'https://api.weixin.qq.com/sns/userinfo?access_token=' + access_token + '&openid=' + openid + '&lang=zh_CN';
 	def info_json = JC.remote.http_call(get_info_url, null);
-	println 'json_info===' + info_json;
+	
 	info_map = jsonSlurper.parseText(info_json);
 }
 
@@ -118,8 +122,9 @@ if(info_map!=null) {
 }
 	
 //开始构建登录信息
-
-if(third_bind.account_id==null) {
+//在需要构建账户并且未构建情况
+logger.info('type======' + type + ', ness create base account?');
+if(type=='account' && third_bind.account_id==null) {
 	//操作成功需要初始化账户
 	dto = new AccountInfoDto(null);
 	dto.ap_id = third_bind.id;
@@ -130,8 +135,15 @@ if(third_bind.account_id==null) {
 GeneralUser gu = gu_service.get(third_bind.account_id);
 def validate_period = 15*24*60*60*1000l; //默认有效期 15天
 
+def basic_name = null;
+def basic_pass = null;
+if(gu!=null) {
+	basic_name = gu.mobile;
+	basic_pass = gu.password;
+}
+
 SessionService session_service = SessionService.INSTANCE();
-AccountSession session = session_service.login_session(gu.mobile, gu.password, third_bind, validate_period, "0", pid);
+AccountSession session = session_service.login_session(basic_name, basic_pass, third_bind, validate_period, "0", pid);
 
 dto.token = session.token;
 return SimpleAjax.available('', dto);
