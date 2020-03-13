@@ -36,7 +36,7 @@ for(x in mcrList) {
 	sql += '?,';
 	params.add(x.id);
 }
-sql = sql.substring(0, sql.length() - 1);
+sql = sql.substring(0, sql.length() - 1) + ')';
 sql += ' order by hindex asc';
 
 List<MemberCardHierarchy> mchList = JcTemplate.INSTANCE().find(MemberCardHierarchy, sql, params.toArray());
