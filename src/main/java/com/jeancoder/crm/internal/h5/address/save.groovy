@@ -47,7 +47,6 @@ if(address_obj==null) {
 	address_obj.ap_id = ap_id;
 }
 
-logger.info((address==null));
 logger.info('address=' + address);
 
 if(address!=null) {
