@@ -40,20 +40,35 @@ if(address_obj==null) {
 	address_obj.proj_id = new BigInteger(pid);
 	address_obj.a_time = new Date();
 	address_obj.flag = 0;
+	address_obj.ap_id = ap_id;
 }
 
-address_obj.address = address;
-address_obj.ap_id = ap_id;
-address_obj.c_time = new Timestamp(Calendar.getInstance().getTimeInMillis());
-address_obj.city = city_name;
-address_obj.city_code = city_code;
-address_obj.province = province_name;
-address_obj.province_code = province_code;
-address_obj.zone = zone_name;
-address_obj.zone_code = zone_code;
-address_obj.mobile = mobile;
-address_obj.name = name;
+if(address!=null) {
+	address_obj.address = address;
+}
+if(city_name!=null) {
+	address_obj.city = city_name;
+}
+if(city_code!=null) {
+	address_obj.city_code = city_code;
+}
+
+if(province_name!=null)
+	address_obj.province = province_name;
+if(province_code!=null)
+	address_obj.province_code = province_code;
+if(zone_name!=null)
+	address_obj.zone = zone_name;
+if(zone_code!=null)
+	address_obj.zone_code = zone_code;
+if(mobile!=null)
+	address_obj.mobile = mobile;
+if(name!=null)
+	address_obj.name = name;
+
+
 address_obj.is_def = is_def;
+address_obj.c_time = new Timestamp(Calendar.getInstance().getTimeInMillis());
 
 if(update) {
 	JcTemplate.INSTANCE().update(address_obj);
@@ -62,8 +77,8 @@ if(update) {
 }
 
 if(is_def>0) {
-	def sql = 'update AccountAddress set is_def=0 where id!=?';
-	JcTemplate.INSTANCE().batchExecute(sql, address_obj.id);
+	def sql = 'update AccountAddress set is_def=0 where id!=? and ap_id=?';
+	JcTemplate.INSTANCE().batchExecute(sql, address_obj.id, ap_id);
 }
 
 return SimpleAjax.available('', address_obj);
