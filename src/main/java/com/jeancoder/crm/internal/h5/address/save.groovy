@@ -3,9 +3,13 @@ package com.jeancoder.crm.internal.h5.address
 import java.sql.Timestamp
 
 import com.jeancoder.app.sdk.JC
+import com.jeancoder.core.log.JCLogger
+import com.jeancoder.core.log.JCLoggerFactory
 import com.jeancoder.crm.ready.constant.SimpleAjax
 import com.jeancoder.crm.ready.entity.AccountAddress
 import com.jeancoder.jdbc.JcTemplate
+
+JCLogger logger = JCLoggerFactory.getLogger('');
 
 def pid = JC.internal.param('pid');
 
@@ -42,6 +46,9 @@ if(address_obj==null) {
 	address_obj.flag = 0;
 	address_obj.ap_id = ap_id;
 }
+
+logger.info((address==null));
+logger.info('address=' + address);
 
 if(address!=null) {
 	address_obj.address = address;
