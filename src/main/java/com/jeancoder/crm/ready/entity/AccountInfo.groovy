@@ -64,6 +64,6 @@ class AccountInfo {
 	@JCNotColumn
 	String part_id;
 	
-	@JCNotColumn
+	//@JCNotColumn
 	String mobile;
 }

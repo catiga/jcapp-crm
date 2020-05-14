@@ -3,6 +3,7 @@ package com.jeancoder.crm.internal.wechat.app
 import com.jeancoder.app.sdk.JC
 import com.jeancoder.app.sdk.source.LoggerSource
 import com.jeancoder.core.log.JCLogger
+import com.jeancoder.core.log.JCLoggerFactory
 import com.jeancoder.crm.ready.constant.SimpleAjax
 import com.jeancoder.crm.ready.dto.ProjectFrontConfig
 import com.jeancoder.crm.ready.dto.h5.AccountInfoDto
@@ -12,13 +13,25 @@ import com.jeancoder.crm.ready.entity.AccountThirdBind
 import com.jeancoder.crm.ready.entity.GeneralUser
 import com.jeancoder.crm.ready.service.GeneralUserService
 import com.jeancoder.crm.ready.service.SessionService
+import com.jeancoder.crm.ready.util.JackSonBeanMapper
 
 import groovy.json.JsonSlurper
 
+JCLogger logger = JCLoggerFactory.getLogger('');
+
 def code = JC.internal.param('code');
 def pid = JC.internal.param('pid');
-
-JCLogger logger = LoggerSource.getLogger();
+def fg_user_info = JC.internal.param('fg_user_info');
+if(fg_user_info!=null) {
+	try {
+		fg_user_info = JackSonBeanMapper.jsonToMap(fg_user_info);
+	} catch(any) {
+		fg_user_info = null;
+	}
+}
+if(fg_user_info!=null) {
+	fg_user_info = fg_user_info['userInfo'];
+}
 
 pid = new BigInteger(pid + '');
 
@@ -33,7 +46,6 @@ def app_secret = supp_config.app_key;
 def url = "https://api.weixin.qq.com/sns/jscode2session?appid=" + app_id + "&secret=" + app_secret + "&js_code=" + code + "&grant_type=authorization_code"
 
 String json = JC.remote.http_call(url, null);
-println json;
 
 def jsonSlurper = new JsonSlurper()
 
@@ -57,13 +69,25 @@ if(openid==null) {
 }
 
 def info_map = null;
-println 'scope======' + scope;
-if(scope=='snsapi_userinfo') {
-	//开始获取用户微信资料
-	def get_info_url = 'https://api.weixin.qq.com/sns/userinfo?access_token=' + access_token + '&openid=' + openid + '&lang=zh_CN';
-	def info_json = JC.remote.http_call(get_info_url, null);
-	println 'json_info===' + info_json;
-	info_map = jsonSlurper.parseText(info_json);
+
+if(fg_user_info==null) {
+	if(scope=='snsapi_userinfo') {
+		//开始获取用户微信资料
+		def get_info_url = 'https://api.weixin.qq.com/sns/userinfo?access_token=' + access_token + '&openid=' + openid + '&lang=zh_CN';
+		def info_json = JC.remote.http_call(get_info_url, null);
+		println 'json_info===' + info_json;
+		info_map = jsonSlurper.parseText(info_json);
+	}
+} else {
+	//构建info_map对象
+	info_map = [:];
+	info_map['headimgurl'] = fg_user_info['avatarUrl'];
+	info_map['nickname'] = fg_user_info['nickName'];
+	if(fg_user_info['gender']!=null) {
+		info_map['sex'] = fg_user_info['gender'];
+	} else {
+		info_map['sex'] = 0;
+	}
 }
 
 GeneralUserService gu_service = GeneralUserService.INSTANCE();
@@ -81,7 +105,8 @@ if(info_map!=null) {
 	AccountInfo account = new AccountInfo();
 	account.head = info_map['headimgurl'];
 	account.nickname = info_map['nickname'];
-	//account.sex = info_map['sex'];
+	if(info_map['sex']!=null)
+		account.sex = info_map['sex'];
 	user_service.update_account_info(third_bind.id, account);
 	dto = new AccountInfoDto(account);
 } else {
@@ -89,27 +114,36 @@ if(info_map!=null) {
 	dto.ap_id = third_bind.id;
 	dto.part_id = third_bind.part_id;
 }
-	
+
+String gu_mobile = null;
+String gu_passwd = null;
+
 //开始构建登录信息
 if(third_bind.account_id==null) {
 	//操作成功需要初始化账户
+	/*
 	dto = new AccountInfoDto(null);
 	dto.ap_id = third_bind.id;
 	dto.part_id = third_bind.part_id;
 	dto.session_key = session_key;
 	return SimpleAjax.available('', dto);
+	*/
+	
+	GeneralUser gu = gu_service.get(third_bind.account_id);
+	if(gu!=null) {
+		gu_mobile = gu.mobile;
+		gu_passwd = gu.password;
+	}
 }
-
-GeneralUser gu = gu_service.get(third_bind.account_id);
 
 def validate_period = 15*24*60*60*1000l; //默认有效期 15天
 
 SessionService session_service = SessionService.INSTANCE();
-AccountSession session = session_service.login_session(gu.mobile, gu.password, third_bind, validate_period, "0", pid);
+AccountSession session = session_service.login_session(gu_mobile, gu_passwd, third_bind, validate_period, "0", pid);
 
 dto.token = session.token;
 dto.session_key = session_key;
-dto.mobile = gu.mobile;
+dto.mobile = gu_mobile;
 
 return SimpleAjax.available('', dto);
 

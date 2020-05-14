@@ -61,6 +61,8 @@ class AccountInfoDto {
 			this.countryname = info.countryname;
 			this.ethnicitycode = info.ethnicitycode;
 			this.ethnicityname = info.ethnicityname;
+			
+			this.mobile = info.mobile;
 		}
 	}
 }
