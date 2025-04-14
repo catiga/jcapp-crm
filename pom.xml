@@ -3,11 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.jeancoder</groupId>
-	<artifactId>92yp_app_crm</artifactId>
+	<artifactId>app_crm</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>92yp_app_crm</name>
+	<name>app_crm</name>
 	<url>http://maven.apache.org</url>
 
 	<properties>
