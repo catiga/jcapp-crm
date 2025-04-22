@@ -29,16 +29,19 @@ if(session==null) {
 
 BigInteger ap_id = session.ap_id;
 AccountInfo info = JcTemplate.INSTANCE().get(AccountInfo, 'select * from AccountInfo where ap_id=?', ap_id);
+AccountInfoDto dto = new AccountInfoDto(info)
 
-if(info==null) {
-	return SimpleAjax.available();
-}
+//if(info==null) {
+//	return SimpleAjax.available();
+//}
+
 AccountThirdBind bind = JcTemplate.INSTANCE().get(AccountThirdBind, 'select * from AccountThirdBind where id=?', ap_id);
 if(bind!=null) {
-	info.part_id = bind.part_id;
+	//info.part_id = bind.part_id;
+	dto.part_id = bind.part_id;
 }
+dto.ap_id = ap_id;
 
-AccountInfoDto dto = new AccountInfoDto(info)
 AccountBasic basic = JcTemplate.INSTANCE().get(AccountBasic.class, 'select * from AccountBasic where id=?', session.basic_id);
 if (basic != null) {
 	dto.mobile = basic.mobile;
@@ -47,7 +50,9 @@ dto.pid = session.proj_id;
 
 try {
 	// 绑定会员卡
-	AccountProjectMcService.INSTANSE.updateByMobile(dto.mobile,session.ap_id,new BigInteger(pid.toString()));
+	if (dto.mobile != null) {
+		AccountProjectMcService.INSTANSE.updateByMobile(dto.mobile,session.ap_id,new BigInteger(pid.toString()));
+	}
 }catch(Exception e) {
 	e.printStackTrace()
 }
