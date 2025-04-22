@@ -151,7 +151,7 @@ class SessionService {
 		return session;
 	}
 	
-	protected AccountSession flush_session(String token, Integer lograns, def pid = GlobalHolder.proj.id) throws Exception {
+	protected AccountSession flush_session(def token, def lograns, def pid = GlobalHolder.proj.id) throws Exception {
 		if(token==null||token.trim().equals('')) {
 			return null;
 		}
